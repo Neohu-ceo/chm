@@ -316,5 +316,29 @@ def status(path: str):
         click.echo(f"\n   {path} is not a git repository")
 
 
+@main.command()
+@click.option("--http", type=int, default=None, help="HTTP port (default: stdio)")
+@click.option("--host", default="127.0.0.1", help="HTTP host")
+def mcp(http: int, host: str):
+    """Start CHM as an MCP (Model Context Protocol) server.
+
+    Exposes 8 tools and 1 resource for AI agents to query codebase health.
+    Use stdio transport by default, or --http for HTTP transport.
+
+    \b
+    Examples:
+      chm mcp                  # stdio (for Claude Desktop)
+      chm mcp --http 8080      # HTTP (for network access)
+      claude mcp add chm -- chm mcp
+    """
+    from chm.mcp_server import main as mcp_main
+    import sys
+    # Simulate: python -m chm.mcp_server --http PORT
+    sys.argv = ["chm-mcp"]
+    if http:
+        sys.argv.extend(["--http", str(http), "--host", host])
+    mcp_main()
+
+
 if __name__ == "__main__":
     main()
