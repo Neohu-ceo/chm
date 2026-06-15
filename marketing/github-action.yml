@@ -1,0 +1,53 @@
+# .github/workflows/code-health.yml
+# Drop this into any repo to get automated codebase health reports.
+# Free for public repos. Pro plan for private repos + HTML reports.
+#
+# 📖 Docs: https://lighthouse-analytics.dev
+# 💬 Community: https://github.com/lighthouse/chm
+
+name: Code Health Report
+
+on:
+  push:
+    branches: [main, master]
+  schedule:
+    - cron: '0 9 * * 1'  # Every Monday at 9am
+  workflow_dispatch:       # Manual trigger
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 500  # Analyze last 500 commits
+
+      - name: Install CHM
+        run: pip install chm
+
+      - name: Run Health Analysis
+        id: chm
+        run: |
+          chm analyze . --report json --output health.json
+          chm analyze . --report html --output health.html
+          echo "score=$(python3 -c "import json;print(json.load(open('health.json'))['health_score'])")" >> $GITHUB_OUTPUT
+
+      - name: Upload HTML Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-health-report
+          path: health.html
+
+      - name: Health Score Badge
+        if: github.event_name == 'push'
+        run: |
+          echo "🏠 Code Health Score: ${{ steps.chm.outputs.score }}/100"
+          # Post score as a commit status or PR comment
+          # Full integration available on Pro plan
+
+      - name: Alert on Low Health
+        if: steps.chm.outputs.score < 40
+        run: |
+          echo "⚠️ Code health score dropped below 40!"
+          echo "Check the HTML report for details."
+          exit 1  # Optionally fail the build

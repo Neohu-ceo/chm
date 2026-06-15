@@ -1,0 +1,119 @@
+{% include "base_styles.html" %}
+<!-- Navigation -->
+<div class="nav">
+    <a href="/dashboard" class="nav-brand">🏠 Lighthouse</a>
+    <div class="nav-links">
+        <a href="/dashboard">控制台</a>
+        <a href="/pricing">升级</a>
+        <a href="/settings">设置</a>
+        <a href="#" onclick="logout()" style="color:var(--red)">退出</a>
+    </div>
+</div>
+
+<div class="container">
+    <h2 style="margin-bottom:.25rem;">欢迎回来，{{ user.name }}</h2>
+    <p style="color:var(--text-muted);margin-bottom:2rem;font-size:.9rem;">{{ user.email }}</p>
+
+    <!-- Subscription Status -->
+    <div class="card" style="background:linear-gradient(135deg,#0f172a,#1e3a5f);color:white;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+            <div>
+                <div style="font-size:.8rem;opacity:.7;text-transform:uppercase;letter-spacing:.1em;">当前方案</div>
+                <div style="font-size:1.5rem;font-weight:700;margin-top:.25rem;" id="current-plan">加载中...</div>
+            </div>
+            <div>
+                <div style="font-size:.8rem;opacity:.7;">状态</div>
+                <div style="font-size:1.1rem;font-weight:600;margin-top:.25rem;" id="plan-status">—</div>
+            </div>
+            <a href="/pricing" class="btn btn-primary" style="background:white;color:#0f172a;">升级方案</a>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid-2" style="margin-top:1.5rem;">
+        <div class="card">
+            <h3>📊 使用统计</h3>
+            <div style="display:flex;gap:2rem;flex-wrap:wrap;">
+                <div><div class="metric-value" id="stat-total">—</div><div class="metric-label">总分析次数</div></div>
+                <div><div class="metric-value" id="stat-recent">—</div><div class="metric-label">近30天</div></div>
+                <div><div class="metric-value" id="stat-repos">—</div><div class="metric-label">独立仓库</div></div>
+            </div>
+        </div>
+        <div class="card">
+            <h3>🔑 API 密钥</h3>
+            <div id="api-keys-list" style="font-size:.875rem;">加载中...</div>
+            <button class="btn btn-outline" style="margin-top:.75rem;font-size:.8rem;" onclick="createApiKey()">+ 创建新密钥</button>
+        </div>
+    </div>
+
+    <!-- Quick Start Guide -->
+    <div class="card">
+        <h3>🚀 快速开始</h3>
+        <div style="background:#1e293b;border-radius:8px;padding:1rem;font-family:monospace;font-size:.85rem;color:#e2e8f0;overflow-x:auto;">
+            <span style="color:#22c55e;">$</span> <span style="color:#93c5fd;">pip install chm</span><br>
+            <span style="color:#22c55e;">$</span> <span style="color:#93c5fd;">export CHM_API_KEY="your_api_key_here"</span><br>
+            <span style="color:#22c55e;">$</span> <span style="color:#93c5fd;">chm analyze . --report html</span>
+        </div>
+    </div>
+</div>
+
+<script>
+async function loadDashboard() {
+    // Load user + subscription
+    const meRes = await fetch('/api/auth/me');
+    const meData = await meRes.json();
+
+    const sub = meData.subscription;
+    document.getElementById('current-plan').textContent = sub ? sub.plan.toUpperCase() : 'FREE';
+    document.getElementById('plan-status').textContent = sub ? (sub.status === 'active' ? 'Active' : sub.status) : '—';
+
+    // Load usage stats
+    const usageRes = await fetch('/api/usage/stats');
+    const usage = await usageRes.json();
+    document.getElementById('stat-total').textContent = usage.total_analyses || 0;
+    document.getElementById('stat-recent').textContent = usage.analyses_last_30_days || 0;
+    document.getElementById('stat-repos').textContent = usage.unique_repos || 0;
+
+    // Load API keys
+    loadApiKeys();
+}
+
+async function loadApiKeys() {
+    const res = await fetch('/api/keys');
+    const data = await res.json();
+    const keys = data.keys || [];
+    if (keys.length === 0) {
+        document.getElementById('api-keys-list').innerHTML = '<span style="color:var(--text-muted)">还没有 API 密钥</span>';
+        return;
+    }
+    document.getElementById('api-keys-list').innerHTML = keys.map(k =>
+        `<div style="padding:.35rem 0;border-bottom:1px solid var(--border);">
+            <code>${k.key_prefix}...</code>
+            <span class="badge badge-${k.revoked ? 'red' : 'green'}" style="float:right;">${k.revoked ? '已吊销' : '活跃'}</span>
+            <br><small style="color:var(--text-muted)">${k.name} · 创建于 ${k.created_at?.slice(0,10)}</small>
+        </div>`
+    ).join('');
+}
+
+async function createApiKey() {
+    const name = prompt('密钥名称（例如: "CLI 工具"）:');
+    if (!name) return;
+    const res = await fetch('/api/keys', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({name}),
+    });
+    const data = await res.json();
+    if (data.key) {
+        alert(`新密钥（仅显示一次！）:\n\n${data.key}\n\n请复制并安全保存。`);
+    }
+    loadApiKeys();
+}
+
+async function logout() {
+    await fetch('/api/auth/logout', {method: 'POST'});
+    window.location.href = '/login';
+}
+
+loadDashboard();
+</script>

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lighthouse Analytics — Business Dashboard</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --accent: #38bdf8;
+            --green: #4ade80;
+            --yellow: #fbbf24;
+            --red: #f87171;
+            --purple: #a78bfa;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Mono', monospace;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .header h1 { font-size: 1.5rem; font-weight: 700; }
+        .header h1 span { color: var(--accent); }
+        .status-dot {
+            width: 10px; height: 10px; border-radius: 50%;
+            background: var(--green); display: inline-block; margin-right: .5rem;
+        }
+        .status { font-size: .85rem; color: var(--text-muted); }
+        .live-indicator { animation: pulse 2s infinite; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .3; }
+        }
+
+        /* Metric cards */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .metric-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+        }
+        .metric-card .label {
+            font-size: .75rem;
+            text-transform: uppercase;
+            letter-spacing: .1em;
+            color: var(--text-muted);
+            margin-bottom: .5rem;
+        }
+        .metric-card .value {
+            font-size: 2rem;
+            font-weight: 800;
+        }
+        .metric-card .sub {
+            font-size: .8rem;
+            color: var(--text-muted);
+            margin-top: .25rem;
+        }
+        .value.green { color: var(--green); }
+        .value.yellow { color: var(--yellow); }
+        .value.accent { color: var(--accent); }
+
+        /* Chart area */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .panel {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+        }
+        .panel h3 {
+            font-size: .85rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .1em;
+        }
+
+        /* Spark bar chart */
+        .bar-chart { display: flex; align-items: flex-end; gap: 2px; height: 120px; }
+        .bar-chart .bar {
+            flex: 1;
+            background: var(--accent);
+            border-radius: 2px 2px 0 0;
+            opacity: .6;
+            transition: opacity .2s;
+            min-width: 8px;
+            position: relative;
+        }
+        .bar-chart .bar:hover { opacity: 1; }
+        .bar-chart .bar .tooltip {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            padding: .25rem .5rem;
+            border-radius: 4px;
+            font-size: .7rem;
+            white-space: nowrap;
+        }
+        .bar-chart .bar:hover .tooltip { display: block; }
+
+        /* Alert list */
+        .alert {
+            padding: .75rem 1rem;
+            border-radius: 8px;
+            margin-bottom: .5rem;
+            font-size: .85rem;
+        }
+        .alert.warning { background: rgba(251,191,36,.1); border-left: 3px solid var(--yellow); }
+        .alert.info { background: rgba(56,189,248,.1); border-left: 3px solid var(--accent); }
+        .alert.critical { background: rgba(248,113,113,.1); border-left: 3px solid var(--red); }
+
+        /* Activity feed */
+        .feed-item {
+            padding: .5rem 0;
+            border-bottom: 1px solid var(--border);
+            font-size: .85rem;
+            display: flex;
+            gap: .75rem;
+            align-items: baseline;
+        }
+        .feed-item .time { color: var(--text-muted); font-size: .75rem; min-width: 50px; }
+
+        /* Refresh button */
+        .refresh-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: .5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: .85rem;
+            transition: all .2s;
+        }
+        .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+        @media (max-width: 768px) {
+            .charts-grid { grid-template-columns: 1fr; }
+            body { padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="header">
+        <div>
+            <h1>🏠 Lighthouse <span>Analytics</span></h1>
+            <p class="status"><span class="status-dot live-indicator"></span> 系统运行中 · 上次更新: <span id="last-update">—</span></p>
+        </div>
+        <button class="refresh-btn" onclick="loadDashboard()">⟳ 刷新</button>
+    </div>
+
+    <div class="metrics-grid" id="metrics"></div>
+
+    <div class="charts-grid">
+        <div class="panel">
+            <h3>📈 最近 30 天使用量</h3>
+            <div class="bar-chart" id="usage-chart"></div>
+        </div>
+        <div class="panel">
+            <h3>⚠️ 系统告警</h3>
+            <div id="alerts-list">
+                <div class="alert info">✅ 所有系统正常</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel" style="margin-bottom:2rem;">
+        <h3>📋 活动日志</h3>
+        <div id="activity-feed">
+            <div class="feed-item"><span class="time">—</span> 加载中...</div>
+        </div>
+    </div>
+
+    <div style="text-align:center;color:var(--text-muted);font-size:.75rem;padding:2rem 0;">
+        Lighthouse Analytics v0.1.0 · Business Operations Dashboard · 2026
+    </div>
+</div>
+
+<script>
+    // Simulated dashboard data (in production, this comes from the Python monitor)
+    const simData = {
+        mrr: 870,
+        total_analyses: 1247,
+        unique_repos: 89,
+        daily_analyses_today: 12,
+        daily_analyses_yesterday: 18,
+        weekly_analyses: 94,
+        paying_customers: 30,
+        active_trials: 15,
+        stars: 2847,
+        active_alerts: 1,
+    };
+
+    function loadDashboard() {
+        document.getElementById('last-update').textContent = new Date().toLocaleTimeString('zh-CN');
+
+        // In real deployment, fetch from API:
+        // fetch('/api/dashboard').then(r => r.json()).then(render)
+
+        render(simData);
+    }
+
+    function render(d) {
+        // Metrics
+        document.getElementById('metrics').innerHTML = `
+            <div class="metric-card">
+                <div class="label">💰 MRR</div>
+                <div class="value green">$${d.mrr.toLocaleString()}</div>
+                <div class="sub">${d.paying_customers} 付费客户</div>
+            </div>
+            <div class="metric-card">
+                <div class="label">📊 总分析次数</div>
+                <div class="value accent">${d.total_analyses.toLocaleString()}</div>
+                <div class="sub">${d.unique_repos} 个独立仓库</div>
+            </div>
+            <div class="metric-card">
+                <div class="label">📅 今日分析</div>
+                <div class="value">${d.daily_analyses_today}</div>
+                <div class="sub">本周: ${d.weekly_analyses}</div>
+            </div>
+            <div class="metric-card">
+                <div class="label">⭐ GitHub Stars</div>
+                <div class="value yellow">${d.stars.toLocaleString()}</div>
+                <div class="sub">目标: 5,000</div>
+            </div>
+            <div class="metric-card">
+                <div class="label">🔄 转化</div>
+                <div class="value">${d.active_trials}</div>
+                <div class="sub">活跃试用中</div>
+            </div>
+        `;
+
+        // Usage chart (simulated 30 days)
+        const maxVal = 25;
+        let chartHTML = '';
+        for (let i = 29; i >= 0; i--) {
+            const val = Math.floor(Math.random() * maxVal) + 3;
+            const pct = (val / maxVal * 100).toFixed(0);
+            chartHTML += `<div class="bar" style="height:${pct}%"><span class="tooltip">${val} 次</span></div>`;
+        }
+        document.getElementById('usage-chart').innerHTML = chartHTML;
+
+        // Alerts
+        if (d.active_alerts > 0) {
+            document.getElementById('alerts-list').innerHTML = `
+                <div class="alert warning">⚠️ 转化率低于预期：15 个试用中仅 30 个付费（历史积累）</div>
+                <div class="alert info">ℹ️ 本周分析量下降 12%，可能受假期影响</div>
+            `;
+        }
+
+        // Activity feed
+        const now = new Date();
+        const activities = [
+            { time: '2 min ago', text: '用户 Bob 分析了仓库 "auth-service" — 健康度 72/100' },
+            { time: '15 min ago', text: '用户 Alice 分析了仓库 "api-gateway" — 健康度 88/100' },
+            { time: '1 hour ago', text: '新试用注册: charlie@example.com' },
+            { time: '3 hours ago', text: 'GitHub Star 达到 2,847！' },
+            { time: '5 hours ago', text: '自动周报已生成并发送给 30 位付费客户' },
+            { time: '1 day ago', text: 'CI/CD 集成测试通过 — v0.2.0 准备发布' },
+        ];
+        document.getElementById('activity-feed').innerHTML = activities.map(a =>
+            `<div class="feed-item"><span class="time">${a.time}</span>${a.text}</div>`
+        ).join('');
+    }
+
+    // Initial load
+    loadDashboard();
+
+    // Auto-refresh every 30 seconds
+    setInterval(loadDashboard, 30000);
+</script>
+</body>
+</html>

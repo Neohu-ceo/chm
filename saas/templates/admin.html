@@ -1,0 +1,87 @@
+{% include "base_styles.html" %}
+<div class="nav">
+    <a href="/dashboard" class="nav-brand">🏠 Lighthouse <span style="color:var(--red);font-size:.75rem;">ADMIN</span></a>
+    <div class="nav-links">
+        <a href="/dashboard">控制台</a>
+        <a href="/pricing">定价</a>
+        <a href="/settings">设置</a>
+    </div>
+</div>
+
+<div class="container">
+    <h2 style="margin-bottom:.25rem;">📊 管理后台</h2>
+    <p style="color:var(--text-muted);margin-bottom:2rem;font-size:.9rem;">平台运营数据总览</p>
+
+    <!-- KPI Cards -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:2rem;">
+        <div class="card" style="text-align:center;">
+            <div class="metric-value" style="color:var(--primary);">$<span id="kpi-mrr">—</span></div>
+            <div class="metric-label">MRR</div>
+        </div>
+        <div class="card" style="text-align:center;">
+            <div class="metric-value" id="kpi-users">—</div>
+            <div class="metric-label">总用户</div>
+        </div>
+        <div class="card" style="text-align:center;">
+            <div class="metric-value" style="color:var(--green);" id="kpi-paying">—</div>
+            <div class="metric-label">付费用户</div>
+        </div>
+        <div class="card" style="text-align:center;">
+            <div class="metric-value" id="kpi-analyses">—</div>
+            <div class="metric-label">总分析次数</div>
+        </div>
+        <div class="card" style="text-align:center;">
+            <div class="metric-value" id="kpi-today">—</div>
+            <div class="metric-label">今日分析</div>
+        </div>
+    </div>
+
+    <!-- Recent Payments -->
+    <div class="card">
+        <h3>💳 最近支付记录</h3>
+        <table id="payment-table">
+            <thead><tr><th>时间</th><th>金额</th><th>方式</th><th>状态</th><th>描述</th></tr></thead>
+            <tbody><tr><td colspan="5" style="text-align:center;color:var(--text-muted);">加载中...</td></tr></tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h3>⚙️ 系统操作</h3>
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+            <button class="btn btn-outline" onclick="refreshDashboard()">🔄 刷新数据</button>
+            <button class="btn btn-outline" onclick="window.open('/ops/dashboard.html')">📈 运营仪表盘</button>
+            <button class="btn btn-outline" onclick="alert('数据库路径: ' + 'saas/data/lighthouse.db')">💾 数据库位置</button>
+        </div>
+    </div>
+</div>
+
+<script>
+async function refreshDashboard() {
+    const res = await fetch('/api/admin/dashboard');
+    const d = await res.json();
+
+    document.getElementById('kpi-mrr').textContent = d.mrr?.toLocaleString() || 0;
+    document.getElementById('kpi-users').textContent = d.total_users || 0;
+    document.getElementById('kpi-paying').textContent = d.paying_users || 0;
+    document.getElementById('kpi-analyses').textContent = (d.total_analyses || 0).toLocaleString();
+    document.getElementById('kpi-today').textContent = d.today_analyses || 0;
+
+    const payments = d.recent_payments || [];
+    const tbody = document.querySelector('#payment-table tbody');
+    if (payments.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">暂无支付记录</td></tr>';
+    } else {
+        tbody.innerHTML = payments.map(p => `
+            <tr>
+                <td>${p.completed_at?.slice(0,16) || p.created_at?.slice(0,16) || '—'}</td>
+                <td><strong>$${p.amount}</strong> ${p.currency}</td>
+                <td><span class="badge badge-blue">${p.provider}</span></td>
+                <td><span class="badge ${p.status === 'completed' ? 'badge-green' : 'badge-yellow'}">${p.status}</span></td>
+                <td style="font-size:.85rem;">${p.description || '—'}</td>
+            </tr>
+        `).join('');
+    }
+}
+
+refreshDashboard();
+</script>

@@ -1,0 +1,2 @@
+# Lighthouse Analytics SaaS — Dependencies
+flask>=3.0

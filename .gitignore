@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+saas/data/lighthouse.db
+saas/data/leads.jsonl
+saas/data/backups/
+ops/data/backups/
+ops/data/metrics.json
+ops/data/weekly_reports/
+.chm/
+.DS_Store

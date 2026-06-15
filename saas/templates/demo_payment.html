@@ -1,0 +1,57 @@
+{% include "base_styles.html" %}
+<div class="nav">
+    <a href="/dashboard" class="nav-brand">🏠 Lighthouse</a>
+    <div class="nav-links">
+        <a href="/dashboard">控制台</a>
+        <a href="/pricing">定价</a>
+    </div>
+</div>
+
+<div class="container" style="max-width:500px;text-align:center;">
+    <div class="card" style="padding:3rem 2rem;">
+        <div style="font-size:4rem;margin-bottom:1rem;">🧪</div>
+        <h2>演示支付</h2>
+        <p style="color:var(--text-muted);margin:1rem 0;">
+            这是支付演示模式。<br>
+            <strong>真实环境中</strong>这里会跳转到 Stripe / PayPal / 微信支付 / 支付宝。
+        </p>
+
+        <div class="card" style="background:#f8fafc;margin:1.5rem 0;">
+            <div style="font-size:.85rem;color:var(--text-muted);">方案</div>
+            <div style="font-size:1.5rem;font-weight:700;">{{ plan | upper }}</div>
+            <div style="font-size:2rem;font-weight:800;color:var(--primary);">${{ amount }}<span style="font-size:1rem;color:var(--text-muted);">/月</span></div>
+        </div>
+
+        <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:1.5rem;">
+            Session: <code>{{ session_id }}</code>
+        </p>
+
+        <button class="btn btn-primary btn-large" style="width:100%;" onclick="simulatePayment()">
+            💳 模拟支付成功
+        </button>
+
+        <p style="font-size:.75rem;color:var(--text-muted);margin-top:1rem;">
+            点击后立即激活 {{ plan }} 方案（演示模式）
+        </p>
+    </div>
+</div>
+
+<script>
+async function simulatePayment() {
+    const res = await fetch('/api/demo/complete-payment', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            plan: '{{ plan }}',
+            provider: 'demo',
+        })
+    });
+    const data = await res.json();
+    if (data.success) {
+        alert('✅ 支付成功！' + data.plan.toUpperCase() + ' 方案已激活。');
+        window.location.href = '/dashboard';
+    } else {
+        alert('支付失败: ' + (data.error || '未知错误'));
+    }
+}
+</script>

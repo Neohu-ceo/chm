@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engineering Blog — Lighthouse Analytics</title>
+    <style>
+        :root {
+            --bg: #f8fafc; --surface: #fff; --text: #0f172a; --text-muted: #64748b;
+            --border: #e2e8f0; --primary: #2563eb;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, serif; background: var(--bg); color: var(--text); line-height: 1.8; }
+        .container { max-width: 720px; margin: 0 auto; padding: 2rem; }
+        .header { text-align: center; padding: 3rem 0; border-bottom: 1px solid var(--border); margin-bottom: 3rem; }
+        .header h1 { font-size: 2rem; margin-bottom: .5rem; }
+        .header p { color: var(--text-muted); }
+        article { margin-bottom: 4rem; }
+        article h2 { font-size: 1.5rem; margin-bottom: .75rem; }
+        article .date { color: var(--text-muted); font-size: .85rem; margin-bottom: 1.5rem; }
+        article p { margin-bottom: 1.2rem; color: #334155; }
+        article pre { background: #1e293b; color: #e2e8f0; padding: 1.5rem; border-radius: 8px; overflow-x: auto; margin: 1rem 0; font-size: .85rem; line-height: 1.8; }
+        article code { background: #f1f5f9; padding: .15rem .4rem; border-radius: 4px; font-size: .85rem; }
+        article pre code { background: none; padding: 0; }
+        article blockquote { border-left: 3px solid var(--primary); padding-left: 1rem; margin: 1.5rem 0; color: var(--text-muted); font-style: italic; }
+        .nav { margin-bottom: 3rem; }
+        .nav a { color: var(--primary); text-decoration: none; font-weight: 500; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="nav"><a href="/">← 返回首页</a></div>
+
+    <div class="header">
+        <h1>🏠 Lighthouse Engineering Blog</h1>
+        <p>关于代码质量、工程效能和开源工具的技术博客</p>
+    </div>
+
+    <!-- Article 1 -->
+    <article>
+        <h2>为什么你的代码库比你想的更不健康</h2>
+        <div class="date">2026-06-10 · 6 min read · 代码质量</div>
+
+        <p>大多数工程团队对自己的代码库有相当大的盲区。他们知道产品有 bug，但不知道<strong>bug 的温床在哪里</strong>。</p>
+
+        <p>我们在分析了 200+ 个开源仓库后发现一个模式：<strong>60% 的 bug 集中在不到 10% 的文件里</strong>。这些「热区文件」有几个共同特征：</p>
+
+        <ol style="margin:1rem 0 1rem 1.5rem;">
+            <li><strong>高频修改</strong>：每个月都在改</li>
+            <li><strong>多人触碰</strong>：3 个以上贡献者都改过</li>
+            <li><strong>低注释率</strong>：代码难以理解</li>
+            <li><strong>没有对应的测试</strong>：改动没有安全网</li>
+        </ol>
+
+        <blockquote>
+            代码热区不是 bug 本身，而是 bug 的工厂。—— Martin Fowler
+        </blockquote>
+
+        <p>识别这些热区是改善代码质量的第一步。而这正是我们构建 CHM 的原因。</p>
+
+        <pre><code>$ chm analyze .
+🔥 Top Hotspots:
+  src/api/server.py        287 churn, 5 authors  ← 重构第一候选
+  src/models/user.py       198 churn, 3 authors
+  src/utils/auth.py        156 churn, 2 authors</code></pre>
+
+        <p>一旦识别出热区，团队可以优先为这些文件写测试、做重构、或拆分模块。这就是<strong>数据驱动的代码质量改善</strong>。</p>
+    </article>
+
+    <!-- Article 2 -->
+    <article>
+        <h2>巴士因子：你的团队最被低估的风险指标</h2>
+        <div class="date">2026-06-01 · 5 min read · 团队效能</div>
+
+        <p>「巴士因子」是一个黑色幽默：<strong>团队里最少需要几个人被巴士撞了，项目就会陷入瘫痪？</strong></p>
+
+        <p>对于多数初创公司和小团队，答案是 <strong>1</strong>。</p>
+
+        <p>我们分析了 500 个 GitHub 仓库，发现：</p>
+
+        <ul style="margin:1rem 0 1rem 1.5rem;">
+            <li><strong>43%</strong> 的仓库巴士因子 ≤ 2</li>
+            <li><strong>18%</strong> 的仓库巴士因子 = 1</li>
+            <li>巴士因子与项目健康度呈正相关 (r = 0.62)</li>
+        </ul>
+
+        <p>怎么改善？</p>
+        <ol style="margin:1rem 0 1rem 1.5rem;">
+            <li><strong>强制 Code Review</strong>：每个 PR 至少两人看过</li>
+            <li><strong>结对编程</strong>：关键模块轮流维护</li>
+            <li><strong>文档 + 知识分享</strong>：定期团队内部技术分享</li>
+            <li><strong>用 CHM 监控</strong>：定期跑分析，关注巴士因子变化</li>
+        </ol>
+    </article>
+
+    <!-- Article 3 -->
+    <article>
+        <h2>我们为什么选择「本地优先」架构</h2>
+        <div class="date">2026-05-25 · 7 min read · 工程决策</div>
+
+        <p>Lighthouse Analytics 的核心产品 CHM 是一个全部在本地运行的 CLI 工具。这个决策不是偶然的。</p>
+
+        <p><strong>三个原因：</strong></p>
+
+        <h3>1. 代码从不出门</h3>
+        <p>对很多公司来说，源代码是最敏感的资产。SonarQube 需要把代码上传到服务器，CodeClimate 需要给 SaaS 平台读取权限。CHM 不需要——分析在你的机器上完成。</p>
+
+        <h3>2. 零延迟</h3>
+        <p>本地分析比网络 API 快 10-100 倍。在 500 个提交的仓库上，CHM 的分析时间通常在 0.1-0.5 秒。</p>
+
+        <h3>3. 极简运维</h3>
+        <p>不需要维护服务器、不需要管理数据库、不需要处理认证——一个 pip install 就够了。</p>
+
+        <p>高级功能（HTML 报告、趋势追踪、团队协作）通过可选的 SaaS 层提供，但核心引擎永远在本地运行。这是我们的承诺。</p>
+    </article>
+</div>
+</body>
+</html>

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CHM Report — {{REPO_NAME}}</title>
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --accent: #3b82f6;
+            --green: #10b981;
+            --yellow: #f59e0b;
+            --red: #ef4444;
+            --header-bg: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 1rem 2rem 4rem; }
+
+        /* Header */
+        .header {
+            background: var(--header-bg);
+            color: white;
+            padding: 2.5rem 2rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+        .header-brand h1 { font-size: 1.2rem; font-weight: 500; opacity: .85; letter-spacing: .05em; }
+        .header-brand h2 { font-size: 1.6rem; font-weight: 700; margin-top: .25rem; }
+        .header-meta { text-align: right; font-size: .85rem; opacity: .75; }
+        .score-ring {
+            width: 120px; height: 120px; border-radius: 50%;
+            border: 6px solid {{SCORE_COLOR}};
+            display: flex; align-items: center; justify-content: center;
+            flex-direction: column; background: rgba(255,255,255,.1);
+        }
+        .score-ring .number { font-size: 2.8rem; font-weight: 800; color: {{SCORE_COLOR}}; line-height: 1; }
+        .score-ring .label { font-size: .75rem; opacity: .7; }
+
+        /* Cards */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; }
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+            border: 1px solid var(--border);
+        }
+        .card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: var(--text); display: flex; align-items: center; gap: .5rem; }
+        .card.full { grid-column: 1 / -1; }
+        .emoji-icon { font-size: 1.3rem; }
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+        th { text-align: left; padding: .5rem .75rem; background: #f8fafc; color: var(--text-muted); font-weight: 600; font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; border-bottom: 2px solid var(--border); }
+        td { padding: .4rem .75rem; border-bottom: 1px solid var(--border); }
+        tr:hover td { background: #f8fafc; }
+
+        /* Bars */
+        .bar-wrap { display: flex; align-items: center; gap: .5rem; }
+        .bar-fill {
+            height: 8px; border-radius: 4px; min-width: 2px;
+            transition: width .3s ease;
+        }
+        .bar-fill.hot { background: var(--red); }
+        .bar-fill.warm { background: var(--yellow); }
+        .bar-fill.cool { background: var(--green); }
+
+        /* Tags */
+        .tag { display: inline-block; padding: .15rem .5rem; border-radius: 12px; font-size: .7rem; font-weight: 600; }
+        .tag-red { background: #fef2f2; color: #991b1b; }
+        .tag-yellow { background: #fffbeb; color: #92400e; }
+        .tag-green { background: #ecfdf5; color: #065f46; }
+        .tag-blue { background: #eff6ff; color: #1e40af; }
+
+        /* Metric boxes */
+        .metric-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+        .metric {
+            flex: 1; min-width: 120px; background: #f8fafc;
+            border-radius: 8px; padding: .75rem 1rem; text-align: center;
+        }
+        .metric .value { font-size: 1.5rem; font-weight: 700; }
+        .metric .unit { font-size: .75rem; color: var(--text-muted); }
+
+        /* Sparklines */
+        .sparkline { display: flex; align-items: flex-end; gap: 1px; height: 40px; }
+        .sparkline .bar { flex: 1; background: var(--accent); border-radius: 1px 1px 0 0; opacity: .6; min-width: 3px; }
+        .sparkline .bar.high { opacity: 1; background: {{SCORE_COLOR}}; }
+
+        /* Footer */
+        .footer { text-align: center; padding: 2rem; color: var(--text-muted); font-size: .8rem; }
+        .footer a { color: var(--accent); text-decoration: none; }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .container { padding: 1rem; }
+            .header { flex-direction: column; text-align: center; }
+            .header-meta { text-align: center; }
+            .grid { grid-template-columns: 1fr; }
+        }
+
+        .print-only { display: none; }
+        @media print {
+            .print-only { display: block; }
+            body { background: white; }
+            .card { box-shadow: none; break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-brand">
+            <h1>🏠 LIGHTHOUSE ANALYTICS</h1>
+            <h2>Codebase Health Report</h2>
+            <div class="header-meta">
+                <div>Repository: <strong>{{REPO_NAME}}</strong></div>
+                <div>Generated: <span id="gen-date"></span></div>
+            </div>
+        </div>
+        <div class="score-ring">
+            <span class="number">{{HEALTH_SCORE}}</span>
+            <span class="label">{{SCORE_LABEL}}</span>
+        </div>
+    </div>
+
+    <!-- Quick metrics -->
+    <div class="metric-row">
+        <div class="metric">
+            <div class="value" id="metric-commits">-</div>
+            <div class="unit">总提交</div>
+        </div>
+        <div class="metric">
+            <div class="value" id="metric-files">-</div>
+            <div class="unit">文件</div>
+        </div>
+        <div class="metric">
+            <div class="value" id="metric-authors">-</div>
+            <div class="unit">贡献者</div>
+        </div>
+        <div class="metric">
+            <div class="value" id="metric-busfactor">-</div>
+            <div class="unit">巴士因子</div>
+        </div>
+        <div class="metric">
+            <div class="value" id="metric-churn">-</div>
+            <div class="unit">总改动行</div>
+        </div>
+        <div class="metric">
+            <div class="value" id="metric-days">-</div>
+            <div class="unit">活跃天</div>
+        </div>
+    </div>
+
+    <!-- Hotspots + Authors -->
+    <div class="grid">
+        <div class="card">
+            <h3><span class="emoji-icon">🔥</span> 代码热区 Top 10</h3>
+            <div id="hotspots-table"></div>
+        </div>
+        <div class="card">
+            <h3><span class="emoji-icon">👥</span> 贡献者排名</h3>
+            <div id="authors-table"></div>
+        </div>
+    </div>
+
+    <!-- Pulse + Complexity -->
+    <div class="grid">
+        <div class="card">
+            <h3><span class="emoji-icon">💓</span> 团队脉动</h3>
+            <div id="pulse-content"></div>
+        </div>
+        <div class="card">
+            <h3><span class="emoji-icon">🧩</span> 复杂度概览</h3>
+            <div id="complexity-content"></div>
+        </div>
+    </div>
+
+    <!-- Risk alerts -->
+    <div class="grid">
+        <div class="card full" id="alerts-card">
+            <h3><span class="emoji-icon">⚠️</span> 风险提示</h3>
+            <div id="alerts-content"></div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Generated by <strong>Lighthouse Analytics</strong> — Codebase Health Monitor v0.1.0</p>
+        <p>lighthouse-analytics.dev · chm analyze .</p>
+    </div>
+</div>
+
+<script>
+(function() {
+    const data = {{DATA_JSON}};
+
+    document.getElementById('gen-date').textContent = new Date().toLocaleDateString('zh-CN');
+
+    // Quick metrics
+    document.getElementById('metric-commits').textContent = (data.total_commits || 0).toLocaleString();
+    document.getElementById('metric-files').textContent = (data.total_files || 0).toLocaleString();
+    document.getElementById('metric-authors').textContent = (data.authors?.total_contributors || 0);
+    document.getElementById('metric-busfactor').textContent = data.authors?.bus_factor || '-';
+    document.getElementById('metric-churn').textContent = ((data.hotspots?.total_churn || 0) / 1000).toFixed(1) + 'k';
+    document.getElementById('metric-days').textContent = data.pulse?.streaks?.total_active_days || '-';
+
+    // Hotspots table
+    const hotspots = data.hotspots?.top_hotspots || [];
+    const maxChurn = Math.max(...hotspots.map(h => h.total_churn), 1);
+    let hsHTML = '<table><thead><tr><th>文件</th><th>改动</th><th>流失</th></tr></thead><tbody>';
+    hotspots.slice(0, 10).forEach(h => {
+        const pct = (h.total_churn / maxChurn * 100).toFixed(0);
+        const cls = pct > 66 ? 'hot' : pct > 33 ? 'warm' : 'cool';
+        const fname = h.file.length > 45 ? '...' + h.file.slice(-42) : h.file;
+        hsHTML += `<tr>
+            <td title="${h.file}">${fname}</td>
+            <td>${h.changes}</td>
+            <td><div class="bar-wrap"><div class="bar-fill ${cls}" style="width:${pct}%"></div><small>${h.total_churn}</small></div></td>
+        </tr>`;
+    });
+    hsHTML += '</tbody></table>';
+    document.getElementById('hotspots-table').innerHTML = hsHTML;
+
+    // Authors table
+    const authors = data.authors?.contributors || [];
+    let auHTML = '<table><thead><tr><th>贡献者</th><th>提交</th><th>改动行</th></tr></thead><tbody>';
+    authors.slice(0, 10).forEach(a => {
+        auHTML += `<tr><td>${a.name}</td><td>${a.commits}</td><td>${(a.total_churn||0).toLocaleString()}</td></tr>`;
+    });
+    auHTML += '</tbody></table>';
+    document.getElementById('authors-table').innerHTML = auHTML;
+
+    // Pulse
+    const pulse = data.pulse || {};
+    const hourData = pulse.hour_distribution || {};
+    const maxHour = Math.max(...Object.values(hourData), 1);
+    let sparkHTML = '<div style="margin-bottom:1rem">';
+    sparkHTML += `<p>📅 ${pulse.date_range?.start || '?'} → ${pulse.date_range?.end || '?'} (${pulse.date_range?.days || 0}天)</p>`;
+    sparkHTML += `<p>⏰ 高峰时段: ${pulse.peak_hour}:00 · 最活跃日: ${pulse.peak_day}</p>`;
+    sparkHTML += `<p>🔥 最长连续: ${pulse.streaks?.longest_streak_days || 0}天 · 😴 最长空白: ${pulse.streaks?.longest_gap_days || 0}天</p>`;
+    sparkHTML += '</div><div class="sparkline">';
+    for (let h = 0; h < 24; h++) {
+        const val = hourData[String(h)] || 0;
+        const pct = (val / maxHour * 100).toFixed(0);
+        sparkHTML += `<div class="bar${val === maxHour ? ' high' : ''}" style="height:${Math.max(pct, 2)}%"></div>`;
+    }
+    sparkHTML += '</div><small style="color:var(--text-muted)">0h — 6h — 12h — 18h — 23h</small>';
+    document.getElementById('pulse-content').innerHTML = sparkHTML;
+
+    // Complexity
+    const comp = data.complexity || {};
+    const risky = comp.risky_files || [];
+    let compHTML = `<div class="metric-row">`;
+    compHTML += `<div class="metric"><div class="value">${comp.files_analyzed || 0}</div><div class="unit">分析文件</div></div>`;
+    compHTML += `<div class="metric"><div class="value">${(comp.total_lines || 0).toLocaleString()}</div><div class="unit">总行数</div></div>`;
+    compHTML += `<div class="metric"><div class="value">${comp.avg_complexity || 0}</div><div class="unit">平均复杂度</div></div>`;
+    compHTML += `</div>`;
+    if (risky.length > 0) {
+        compHTML += '<p style="margin-top:1rem"><strong>⚠️ 高风险文件:</strong></p><ul style="font-size:.85rem;padding-left:1.2rem">';
+        risky.slice(0, 6).forEach(f => {
+            compHTML += `<li>${f.file} <span class="tag tag-red">复杂度${f.complexity_score}</span></li>`;
+        });
+        compHTML += '</ul>';
+    }
+    document.getElementById('complexity-content').innerHTML = compHTML;
+
+    // Alerts
+    const alerts = [];
+    if (data.authors?.bus_factor === 1) alerts.push({level:'red', text:`⚠️ 巴士因子 = 1：所有知识集中在一个人身上，这是最高风险！`});
+    else if (data.authors?.bus_factor <= 2) alerts.push({level:'yellow', text:`⚠️ 巴士因子偏低 (${data.authors.bus_factor})：少数人掌握了大部分代码。`});
+
+    const top3churn = hotspots.slice(0,3).reduce((s,h) => s + h.total_churn, 0);
+    const totalChurn = data.hotspots?.total_churn || 1;
+    if (top3churn / totalChurn > 0.5) alerts.push({level:'yellow', text:`📊 前3个文件占 ${(top3churn/totalChurn*100).toFixed(0)}% 的改动——可能存在设计问题。`});
+
+    if (risky.length > 5) alerts.push({level:'yellow', text:`🧩 ${risky.length} 个文件同时具有高复杂度和低注释率。`});
+
+    const avgDaily = pulse.avg_commits_per_day || 0;
+    if (avgDaily > 0 && avgDaily < 0.2) alerts.push({level:'yellow', text:`🐢 平均每日提交仅 ${avgDaily.toFixed(2)}，开发活跃度偏低。`});
+
+    if (alerts.length === 0) alerts.push({level:'green', text:`✅ 未发现重大风险项，代码库整体健康。`});
+
+    let alertHTML = '';
+    alerts.forEach(a => {
+        const tagCls = a.level === 'red' ? 'tag-red' : a.level === 'yellow' ? 'tag-yellow' : 'tag-green';
+        alertHTML += `<div style="margin-bottom:.5rem"><span class="tag ${tagCls}">${a.level === 'red' ? '严重' : a.level === 'yellow' ? '注意' : '良好'}</span> ${a.text}</div>`;
+    });
+    document.getElementById('alerts-content').innerHTML = alertHTML;
+})();
+</script>
+</body>
+</html>

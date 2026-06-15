@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compare — CHM vs Alternatives | Lighthouse Analytics</title>
+    <style>
+        :root {
+            --bg: #f8fafc; --surface: #fff; --text: #0f172a; --text-muted: #64748b;
+            --border: #e2e8f0; --primary: #2563eb; --green: #10b981; --red: #ef4444;
+            --gradient: linear-gradient(135deg, #0f172a, #1e3a5f);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+        .hero { background: var(--gradient); color: white; text-align: center; padding: 4rem 2rem; border-radius: 16px; margin-bottom: 3rem; }
+        .hero h1 { font-size: 2.5rem; margin-bottom: .75rem; }
+        .hero p { opacity: .8; font-size: 1.1rem; }
+        table { width: 100%; border-collapse: collapse; margin: 2rem 0; font-size: .9rem; background: var(--surface); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+        th { background: #1e293b; color: white; padding: .85rem 1rem; text-align: left; font-weight: 600; }
+        th:first-child { background: var(--primary); font-size: 1rem; }
+        td { padding: .7rem 1rem; border-bottom: 1px solid var(--border); }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #f8fafc; }
+        .check { color: var(--green); font-weight: bold; }
+        .cross { color: var(--red); }
+        .partial { color: #f59e0b; }
+        .winner { background: #ecfdf5; }
+        .highlight { background: #eff6ff; }
+        .cta { text-align: center; padding: 3rem 0; }
+        .btn {
+            display: inline-block; padding: .85rem 2.5rem; border-radius: 8px;
+            font-weight: 600; font-size: 1.1rem; text-decoration: none; cursor: pointer;
+            background: var(--primary); color: white; transition: all .15s;
+        }
+        .btn:hover { background: #1d4ed8; transform: translateY(-1px); }
+        @media (max-width: 768px) { table { font-size: .75rem; } th, td { padding: .5rem; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="hero">
+        <h1>🏠 CHM vs. 竞品</h1>
+        <p>为什么 3,000+ 开发者选择 Lighthouse Analytics</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>功能</th>
+                <th>CHM</th>
+                <th>SonarQube</th>
+                <th>CodeClimate</th>
+                <th>CodeScene</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="highlight">
+                <td><strong>安装方式</strong></td>
+                <td class="check">pip install</td>
+                <td>需要 Java 服务器</td>
+                <td>SaaS 注册</td>
+                <td>SaaS 注册</td>
+            </tr>
+            <tr>
+                <td><strong>本地运行</strong></td>
+                <td class="check">✅ 完全本地</td>
+                <td class="partial">⚠️ 需要服务器</td>
+                <td class="cross">❌</td>
+                <td class="cross">❌</td>
+            </tr>
+            <tr class="highlight">
+                <td><strong>开源</strong></td>
+                <td class="check">✅ MIT</td>
+                <td class="cross">❌ 商业闭源</td>
+                <td class="cross">❌</td>
+                <td class="cross">❌</td>
+            </tr>
+            <tr>
+                <td><strong>Git 原生</strong></td>
+                <td class="check">✅ 直接读 Git</td>
+                <td class="partial">⚠️ 需要插件</td>
+                <td class="check">✅</td>
+                <td class="check">✅</td>
+            </tr>
+            <tr class="highlight">
+                <td><strong>代码热区</strong></td>
+                <td class="check">✅</td>
+                <td class="cross">❌</td>
+                <td class="check">✅</td>
+                <td class="check">✅</td>
+            </tr>
+            <tr>
+                <td><strong>巴士因子</strong></td>
+                <td class="check">✅</td>
+                <td class="cross">❌</td>
+                <td class="cross">❌</td>
+                <td class="check">✅</td>
+            </tr>
+            <tr class="highlight">
+                <td><strong>团队脉动</strong></td>
+                <td class="check">✅ 24h 分布</td>
+                <td class="cross">❌</td>
+                <td class="cross">❌</td>
+                <td class="check">✅ 有限</td>
+            </tr>
+            <tr>
+                <td><strong>复杂度分析</strong></td>
+                <td class="check">✅ 启发式</td>
+                <td class="check">✅ AST 级别</td>
+                <td class="check">✅</td>
+                <td class="partial">⚠️ 基础</td>
+            </tr>
+            <tr class="highlight">
+                <td><strong>HTML 报告</strong></td>
+                <td class="check">✅ 精美自包含</td>
+                <td class="check">✅</td>
+                <td class="check">✅</td>
+                <td class="partial">⚠️</td>
+            </tr>
+            <tr>
+                <td><strong>历史趋势</strong></td>
+                <td class="check">✅ v0.2.0</td>
+                <td class="cross">❌</td>
+                <td class="check">✅</td>
+                <td class="check">✅</td>
+            </tr>
+            <tr class="highlight">
+                <td><strong>CI/CD 集成</strong></td>
+                <td class="check">✅ GitHub Actions</td>
+                <td class="check">✅</td>
+                <td class="check">✅</td>
+                <td class="partial">⚠️ 有限</td>
+            </tr>
+            <tr>
+                <td><strong>定价 (团队/月)</strong></td>
+                <td class="check"><strong>$29</strong></td>
+                <td>$150+</td>
+                <td>$49+</td>
+                <td>€18/人/月</td>
+            </tr>
+            <tr class="highlight">
+                <td><strong>免费版</strong></td>
+                <td class="check">✅ 功能完整</td>
+                <td class="cross">❌ 社区版有限</td>
+                <td class="partial">⚠️ 14天试用</td>
+                <td class="cross">❌</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;margin:2rem 0;">
+        <div class="card" style="background:var(--surface);border-radius:12px;padding:1.5rem;border:2px solid var(--primary);">
+            <h3>🎯 CHM 的优势</h3>
+            <ul style="list-style:none;margin-top:.75rem;font-size:.9rem;line-height:2;">
+                <li>✅ 最轻量的安装</li>
+                <li>✅ 最强的隐私保护</li>
+                <li>✅ 最低的价格</li>
+                <li>✅ 核心功能永久免费</li>
+                <li>✅ Git 原生，专注做一件事</li>
+            </ul>
+        </div>
+        <div class="card" style="background:var(--surface);border-radius:12px;padding:1.5rem;border:1px solid var(--border);">
+            <h3>🎯 什么时候选其他方案</h3>
+            <ul style="list-style:none;margin-top:.75rem;font-size:.9rem;line-height:2;">
+                <li>→ 需要 AST 级别代码检查：SonarQube</li>
+                <li>→ 需要代码覆盖率 + 质量门禁：CodeClimate</li>
+                <li>→ 只关心行为和团队模式：CodeScene</li>
+                <li>→ 已经在用 JetBrains：Qodana</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="cta">
+        <h2 style="margin-bottom:.75rem;">自己试试？</h2>
+        <p style="color:var(--text-muted);margin-bottom:1.5rem;">不需要注册，不需要服务器，一个命令就够了。</p>
+        <code style="background:#1e293b;color:#e2e8f0;padding:.75rem 1.5rem;border-radius:8px;font-size:1rem;display:block;max-width:300px;margin:0 auto 1.5rem;">pip install chm</code>
+        <a href="/free-report" class="btn">免费在线试用 →</a>
+    </div>
+</div>
+</body>
+</html>

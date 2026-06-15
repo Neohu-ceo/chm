@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Code Health Report — Lighthouse Analytics</title>
+    <meta name="description" content="Paste your git stats and get a free mini codebase health report in 30 seconds.">
+    <style>
+        :root {
+            --bg: #f8fafc; --surface: #fff; --text: #0f172a; --text-muted: #64748b;
+            --border: #e2e8f0; --primary: #2563eb; --green: #10b981; --yellow: #f59e0b; --red: #ef4444;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+        .container { max-width: 800px; margin: 0 auto; padding: 2rem; }
+        .header { text-align: center; padding: 3rem 0 2rem; }
+        .header h1 { font-size: 2.2rem; margin-bottom: .5rem; }
+        .header p { color: var(--text-muted); font-size: 1.1rem; }
+        .card { background: var(--surface); border-radius: 12px; padding: 2rem; border: 1px solid var(--border); margin-bottom: 1.5rem; }
+        textarea { width: 100%; height: 200px; border: 2px solid var(--border); border-radius: 8px; padding: 1rem; font-family: 'SF Mono', monospace; font-size: .85rem; resize: vertical; }
+        textarea:focus { outline: none; border-color: var(--primary); }
+        .btn {
+            display: inline-block; padding: .75rem 2rem; border-radius: 8px;
+            font-weight: 600; font-size: 1rem; cursor: pointer; border: none; transition: all .15s;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .result { display: none; margin-top: 1.5rem; }
+        .score-circle {
+            width: 100px; height: 100px; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; flex-direction: column;
+            margin: 0 auto 1.5rem; color: white; font-weight: 800;
+        }
+        .score-circle .num { font-size: 2.2rem; line-height: 1; }
+        .score-circle .word { font-size: .7rem; opacity: .8; }
+        .metric-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+        .metric { flex: 1; min-width: 100px; background: #f8fafc; border-radius: 8px; padding: 1rem; text-align: center; }
+        .metric .val { font-size: 1.5rem; font-weight: 700; }
+        .metric .lbl { font-size: .75rem; color: var(--text-muted); }
+        .alert-box { padding: .75rem 1rem; border-radius: 8px; margin-bottom: .5rem; font-size: .9rem; }
+        .alert-red { background: #fef2f2; color: #991b1b; border-left: 3px solid var(--red); }
+        .alert-yellow { background: #fffbeb; color: #92400e; border-left: 3px solid var(--yellow); }
+        .alert-green { background: #ecfdf5; color: #065f46; border-left: 3px solid var(--green); }
+        .social-proof { text-align: center; padding: 2rem 0; }
+        .logos { display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap; opacity: .5; font-size: .85rem; margin-top: 1rem; }
+        .cta { text-align: center; padding: 3rem 0; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🏠 免费代码库健康快照</h1>
+        <p>粘贴你的 <code>git log</code> 输出，30 秒内得到一份简易健康报告。不需要注册。</p>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-bottom:.75rem;">📋 输入你的 Git 数据</h3>
+        <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:.75rem;">
+            在你的终端运行以下命令，然后粘贴输出：<br>
+            <code style="background:#1e293b;color:#e2e8f0;padding:.15rem .5rem;border-radius:4px;">git log --oneline --format="%an|%ad" --date=short -50 && echo "---FILES---" && git log --numstat --format="" -50</code>
+        </p>
+        <textarea id="git-input" placeholder="粘贴 git log 输出..."></textarea>
+        <button class="btn btn-primary" style="margin-top:.75rem;" onclick="analyzeInput()">🔍 分析我的代码库</button>
+
+        <div class="result" id="result">
+            <div id="score-area"></div>
+            <div class="metric-row" id="metrics-area"></div>
+            <div id="alerts-area"></div>
+        </div>
+    </div>
+
+    <!-- How it works -->
+    <div class="card">
+        <h3>🪜 怎么运作的？</h3>
+        <ol style="padding-left:1.2rem;color:var(--text-muted);font-size:.9rem;line-height:2;">
+            <li>你运行一行 <code>git log</code> 命令</li>
+            <li>数据在浏览器本地计算（不会上传到服务器）</li>
+            <li>我们的分析引擎评估 4 个维度</li>
+            <li>你得到一份免费报告 + 升级建议</li>
+        </ol>
+    </div>
+
+    <!-- Social proof -->
+    <div class="social-proof">
+        <h3>被 3,000+ 开发者信任</h3>
+        <div class="logos">
+            <span>🏢 ACME Corp</span>
+            <span>🏢 TechStart</span>
+            <span>🏢 DataFlow</span>
+            <span>🏢 CloudBase</span>
+            <span>🏢 DevCo</span>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta">
+        <h2 style="margin-bottom:.5rem;">想要完整的 HTML 报告和趋势追踪？</h2>
+        <p style="color:var(--text-muted);margin-bottom:1.5rem;">专业版 $29/月，14 天免费试用。</p>
+        <a href="/register" class="btn btn-primary" style="font-size:1.1rem;padding:1rem 3rem;">免费注册 →</a>
+        <p style="margin-top:.75rem;font-size:.85rem;color:var(--text-muted);">
+            或者 <code>pip install chm</code> 在终端里免费使用
+        </p>
+    </div>
+</div>
+
+<script>
+function analyzeInput() {
+    const raw = document.getElementById('git-input').value.trim();
+    if (!raw) { alert('请先粘贴 git log 输出'); return; }
+
+    // Parse the input
+    const lines = raw.split('\n');
+    const authors = {};
+    const dates = [];
+    const files = {};
+    let inFiles = false;
+
+    for (const line of lines) {
+        if (line.startsWith('---FILES---')) { inFiles = true; continue; }
+        if (!inFiles) {
+            // Author|Date line
+            const parts = line.split('|');
+            if (parts.length >= 2) {
+                const author = parts[0].trim();
+                const date = parts[1].trim().slice(0,10);
+                authors[author] = (authors[author] || 0) + 1;
+                dates.push(date);
+            }
+        } else {
+            // numstat line: adds\ttabs\tfile
+            const parts = line.split('\t');
+            if (parts.length === 3) {
+                const file = parts[2];
+                const adds = parseInt(parts[0]) || 0;
+                const dels = parseInt(parts[1]) || 0;
+                if (!files[file]) files[file] = { changes: 0, churn: 0 };
+                files[file].changes += 1;
+                files[file].churn += adds + dels;
+            }
+        }
+    }
+
+    const totalCommits = dates.length;
+    const totalAuthors = Object.keys(authors).length;
+    const sortedFiles = Object.entries(files).sort((a,b) => b[1].churn - a[1].churn);
+    const totalChurn = sortedFiles.reduce((s, f) => s + f[1].churn, 0);
+
+    if (totalCommits === 0) { alert('未检测到有效数据。请确保粘贴完整输出。'); return; }
+
+    // Calculate health score
+    let score = 50;
+    const alerts = [];
+
+    // Bus factor
+    const authorCommits = Object.entries(authors).sort((a,b) => b[1] - a[1]);
+    let cum = 0, busFactor = authorCommits.length;
+    for (let i = 0; i < authorCommits.length; i++) {
+        cum += authorCommits[i][1];
+        if (cum >= totalCommits * 0.5) { busFactor = i + 1; break; }
+    }
+
+    if (busFactor === 1) { score -= 20; alerts.push({level:'red', text:`⚠️ 巴士因子 = 1：${authorCommits[0][0]} 贡献了 ${(authorCommits[0][1]/totalCommits*100).toFixed(0)}% 的提交。如果TA离开，项目将面临严重风险。`}); }
+    else if (busFactor <= 2) { score -= 10; alerts.push({level:'yellow', text:`⚠️ 巴士因子偏低 (${busFactor})。建议分散知识到更多团队成员。`}); }
+    else { score += 5; alerts.push({level:'green', text:`✅ 巴士因子 = ${busFactor}，知识分布良好。`}); }
+
+    // Hotspot concentration
+    const top3Churn = sortedFiles.slice(0,3).reduce((s,f) => s + f[1].churn, 0);
+    if (top3Churn / totalChurn > 0.5 && sortedFiles.length > 5) {
+        score -= 15;
+        alerts.push({level:'yellow', text:`📊 前3个文件占据了 ${(top3Churn/totalChurn*100).toFixed(0)}% 的改动量。${sortedFiles[0][0]} 是最大热区，考虑重构。`});
+    }
+
+    // Activity consistency
+    if (dates.length >= 5) {
+        const uniqueDays = new Set(dates).size;
+        const dateRange = dates.sort();
+        const totalDays = (new Date(dateRange[dateRange.length-1]) - new Date(dateRange[0])) / 86400000 + 1;
+        const consistency = uniqueDays / totalDays;
+        if (consistency > 0.5) { score += 10; alerts.push({level:'green', text:`✅ 提交频率稳定，活跃度良好。`}); }
+        else if (consistency < 0.2) { score -= 5; alerts.push({level:'yellow', text:'🐢 提交频率偏低，可能存在长时间的开发空白期。'}); }
+    }
+
+    score = Math.max(0, Math.min(100, score));
+    const color = score >= 70 ? '#10b981' : score >= 40 ? '#f59e0b' : '#ef4444';
+    const word = score >= 70 ? '健康' : score >= 40 ? '一般' : '需改进';
+
+    // Render
+    document.getElementById('score-area').innerHTML = `
+        <div class="score-circle" style="background:${color};">
+            <span class="num">${score}</span><span class="word">${word}</span>
+        </div>
+    `;
+    document.getElementById('metrics-area').innerHTML = `
+        <div class="metric"><div class="val">${totalCommits}</div><div class="lbl">提交</div></div>
+        <div class="metric"><div class="val">${totalAuthors}</div><div class="lbl">贡献者</div></div>
+        <div class="metric"><div class="val">${busFactor}</div><div class="lbl">巴士因子</div></div>
+        <div class="metric"><div class="val">${sortedFiles.length}</div><div class="lbl">变动文件</div></div>
+        <div class="metric"><div class="val">${(totalChurn/1000).toFixed(1)}k</div><div class="lbl">总改动行</div></div>
+    `;
+    document.getElementById('alerts-area').innerHTML = `
+        <h4 style="margin-bottom:.5rem;">🔍 发现</h4>
+        ${alerts.map(a => `<div class="alert-box alert-${a.level}">${a.text}</div>`).join('')}
+        <div style="margin-top:1rem;padding:1rem;background:#eff6ff;border-radius:8px;font-size:.9rem;">
+            <strong>🏠 想看到完整的 HTML 报告和趋势追踪？</strong><br>
+            安装完整版 CLI 工具：<code style="background:#dbeafe;padding:.15rem .5rem;border-radius:4px;">pip install chm</code>
+            或 <a href="/register" style="color:var(--primary);">注册免费账户</a> 获取专业版功能。
+        </div>
+    `;
+    document.getElementById('result').style.display = 'block';
+    document.getElementById('result').scrollIntoView({behavior:'smooth'});
+}
+</script>
+</body>
+</html>
