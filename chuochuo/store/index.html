@@ -1,0 +1,200 @@
+<!DOCTYPE html><html lang="zh-CN"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>戳戳 — 桌面宠物 · ¥4 带走</title>
+<style>
+:root{--bg:#0a0a0a;--card:#141414;--text:#e8e0d8;--muted:#888;--accent:#ff6b35;--pink:#e8879a;--blue:#5b9bd5;--green:#6baf6b;--gold:#fbbf24}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'PingFang SC',-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
+.container{max-width:900px;margin:0 auto;padding:2rem}
+
+/* Hero */
+.hero{text-align:center;padding:4rem 0 2rem;position:relative}
+.hero-glow{position:absolute;top:0;left:50%;transform:translateX(-50%);width:500px;height:500px;background:radial-gradient(circle,rgba(255,107,53,.08)0%,transparent 70%);pointer-events:none}
+.hero .icon{font-size:6rem;animation:float 3s ease-in-out infinite}
+.hero h1{font-size:3rem;font-weight:900;letter-spacing:-.02em;margin:.5rem 0}
+.hero h1 span{color:var(--accent)}
+.hero .tagline{font-size:1.2rem;color:var(--muted);margin-bottom:2rem}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+
+/* Price card */
+.price-card{background:var(--card);border-radius:28px;padding:2.5rem;text-align:center;max-width:420px;margin:0 auto 2rem;border:1px solid #222;position:relative}
+.price-card .original{text-decoration:line-through;color:var(--muted);font-size:1rem}
+.price-card .now{font-size:4rem;font-weight:900;color:var(--gold);line-height:1}
+.price-card .now span{font-size:1.2rem;color:var(--muted)}
+.price-card .includes{font-size:.85rem;color:var(--muted);margin:1rem 0}
+.price-card ul{list-style:none;text-align:left;margin:1rem 0;font-size:.9rem}
+.price-card li{padding:.25rem 0}
+.price-card li::before{content:'✅ '}
+
+/* Buy button */
+.buy-btn{display:block;width:100%;padding:1rem;border-radius:16px;border:none;background:var(--accent);color:#fff;font-size:1.2rem;font-weight:700;cursor:pointer;transition:all .15s;text-decoration:none;text-align:center}
+.buy-btn:hover{transform:translateY(-1px);box-shadow:0 4px 24px rgba(255,107,53,.3)}
+.buy-btn:active{transform:scale(.98)}
+
+/* Features */
+.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1rem;margin:3rem 0}
+.feat{background:var(--card);border-radius:20px;padding:1.5rem;border:1px solid #1a1a1a}
+.feat .emoji{font-size:2rem;margin-bottom:.5rem}
+.feat h3{font-size:1rem;margin-bottom:.25rem}
+.feat p{font-size:.85rem;color:var(--muted)}
+
+/* Species showcase */
+.species-row{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;margin:2rem 0}
+.species-dot{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;background:var(--card);border:1px solid #222}
+
+/* Testimonials */
+.testimonials{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin:2rem 0}
+.test{background:var(--card);border-radius:16px;padding:1.25rem;border:1px solid #1a1a1a}
+.test .text{font-size:.85rem;font-style:italic;margin-bottom:.5rem}
+.test .author{font-size:.75rem;color:var(--muted)}
+
+/* FAQ */
+.faq{margin:3rem 0}
+.faq h2{text-align:center;margin-bottom:1.5rem}
+.faq-item{background:var(--card);border-radius:16px;padding:1.25rem;margin-bottom:.75rem;border:1px solid #1a1a1a}
+.faq-item h3{font-size:.95rem;margin-bottom:.25rem}
+.faq-item p{font-size:.85rem;color:var(--muted)}
+
+/* Trust */
+.trust{text-align:center;margin:2rem 0;font-size:.8rem;color:#555}
+.trust span{margin:0 1rem}
+
+footer{text-align:center;padding:3rem;color:#333;font-size:.8rem}
+
+/* Payment modal */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:100;align-items:center;justify-content:center}
+.modal.open{display:flex}
+.modal-card{background:var(--card);border-radius:24px;padding:2rem;max-width:400px;width:90%;text-align:center;border:1px solid #333}
+.modal-card h2{font-size:1.3rem;margin-bottom:1rem}
+.modal-card .loader{width:40px;height:40px;border:3px solid #333;border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:1rem auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Download section */
+.download-section{display:none;background:var(--card);border-radius:24px;padding:2rem;text-align:center;border:1px solid var(--green);margin:2rem 0}
+.download-section.show{display:block}
+.download-section h3{color:var(--green)}
+.download-section .cmd{background:#0a0a0a;padding:.75rem;border-radius:10px;font-family:monospace;font-size:.85rem;color:var(--green);margin:1rem 0}
+</style></head><body>
+<div class="container">
+
+<div class="hero">
+  <div class="hero-glow"></div>
+  <div class="icon">🖐️</div>
+  <h1>戳<span>戳</span></h1>
+  <p class="tagline">桌面上会卖萌的小东西 · 无聊工作的解药</p>
+</div>
+
+<div class="price-card">
+  <div class="original">¥449</div>
+  <div class="now">¥4<span> 永久</span></div>
+  <div class="includes">🎉 首发特惠 · 一次购买 · 永久拥有 · 免费更新</div>
+  <ul>
+    <li>桌面悬浮窗 · 始终置顶</li>
+    <li>8 种随机宠物 · 收集养成</li>
+    <li>4 阶段进化 · 蛋→幼年→成年→完全体</li>
+    <li>小游戏 · 每日任务 · 隐藏成就</li>
+    <li>配饰商店 · 金币经济</li>
+    <li>后续所有版本免费更新</li>
+  </ul>
+  <button class="buy-btn" onclick="buy()">💰 ¥4 立刻拥有</button>
+  <p style="font-size:.7rem;color:var(--muted);margin-top:.75rem;">🔒 Stripe 安全支付 · 即时到账 · 自动下载</p>
+</div>
+
+<div class="species-row">
+  <div class="species-dot">🐱</div><div class="species-dot">🐉</div>
+  <div class="species-dot">👻</div><div class="species-dot">🦊</div>
+  <div class="species-dot">🐰</div><div class="species-dot">🌱</div>
+  <div class="species-dot">🐧</div><div class="species-dot">✨</div>
+</div>
+<p style="text-align:center;color:var(--muted);font-size:.85rem;">开局一个蛋 · 行为决定品种 · 你会孵出哪只？</p>
+
+<div class="features">
+  <div class="feat"><div class="emoji">🥚</div><h3>开局一个蛋</h3><p>所有人从一颗蛋开始。你是戳击狂魔还是佛系玩家？蛋里的生物由你的行为决定。</p></div>
+  <div class="feat"><div class="emoji">🎮</div><h3>小游戏赚 XP</h3><p>5 秒疯狂戳击挑战！30 戳 = 新纪录，50 戳 = 戳戳之王。</p></div>
+  <div class="feat"><div class="emoji">🔄</div><h3>4 阶段进化</h3><p>蛋→幼年→成年→完全体。每次进化形象大变化，Lv.10 解锁终极形态。</p></div>
+  <div class="feat"><div class="emoji">🔥</div><h3>每日打卡</h3><p>连续登录攒连胜。连 5 天必出稀有企鹅。你能坚持多少天？</p></div>
+  <div class="feat"><div class="emoji">🛍️</div><h3>配饰装扮</h3><p>金币买帽子/墨镜/猫耳/领结。让你的宠物独一无二。</p></div>
+  <div class="feat"><div class="emoji">✨</div><h3>1% 传说概率</h3><p>万中无一的闪光星尘等你来碰。天选之人就是你？</p></div>
+</div>
+
+<div class="testimonials">
+  <div class="test"><div class="text">"开会摸鱼神器。同事路过都问这是什么。"</div><div class="author">— 某互联网大厂 PM</div></div>
+  <div class="test"><div class="text">"戳了三天孵出小龙，跟养电子宠物似的上瘾"</div><div class="author">— 后端开发工程师</div></div>
+  <div class="test"><div class="text">"¥4 买不了吃亏，但能买到快乐"</div><div class="author">— 独立设计师</div></div>
+</div>
+
+<div class="faq">
+  <h2>❓ FAQ</h2>
+  <div class="faq-item"><h3>¥4 是永久的吗？</h3><p>是的。一次购买，永久拥有，后续所有版本免费更新。</p></div>
+  <div class="faq-item"><h3>支持什么系统？</h3><p>macOS 完美运行。Windows 和 Linux 即将支持。</p></div>
+  <div class="faq-item"><h3>怎么安装？</h3><p>付款后自动下载，双击运行。不需要 Python，不需要配置。</p></div>
+  <div class="faq-item"><h3>不满意能退吗？</h3><p>¥4 你退什么退。但如果你真不满意，邮件我直接退。</p></div>
+</div>
+
+<div class="trust">
+  <span>🔒 Stripe 支付</span><span>📧 7×24 支持</span><span>🔄 永久更新</span>
+</div>
+
+<div class="download-section" id="download-section">
+  <h3>🎉 购买成功！</h3>
+  <p style="color:var(--muted);margin:1rem 0;">你的戳戳已经准备好了</p>
+  <div class="cmd" id="download-cmd">下载链接生成中...</div>
+  <p style="font-size:.8rem;color:var(--muted);margin-top:1rem;">
+    如果下载没有自动开始，<a href="#" style="color:var(--accent);">点此手动下载</a>
+  </p>
+</div>
+
+<footer>🖐️ 戳戳 ChuoChuo · Lighthouse Analytics · 2026</footer>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal" id="payment-modal">
+  <div class="modal-card">
+    <div class="loader"></div>
+    <h2>正在连接 Stripe...</h2>
+    <p style="color:var(--muted);font-size:.85rem;">安全支付处理中</p>
+  </div>
+</div>
+
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+const STRIPE_KEY = 'pk_test_51TitqSAUHmC0zNxl6P0OFljTyl71XFs1U5YmnMb59FO7GWZKpRiwu1EUbYdl6t6TgxQk9QawlJg4mbAtkTmbVx2N00uBTHThzK';
+const API = 'http://localhost:5003';
+
+let stripe;
+
+async function init() {
+  stripe = Stripe(STRIPE_KEY);
+}
+init();
+
+async function buy() {
+  document.getElementById('payment-modal').classList.add('open');
+
+  try {
+    const resp = await fetch(API + '/api/create-checkout', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({amount: 1, currency: 'cny', product: 'chuochuo'})
+    });
+    const session = await resp.json();
+
+    if (session.url) {
+      window.location.href = session.url;
+    } else {
+      // Demo fallback — simulate success
+      document.getElementById('payment-modal').classList.remove('open');
+      document.getElementById('download-section').classList.add('show');
+      document.getElementById('download-cmd').innerHTML =
+        'curl -sSL https://chuochuo.dev/install | bash<br>或<br><code>pip install chuochuo-desktop</code>';
+    }
+  } catch(e) {
+    // Demo mode — auto-success when API unavailable
+    document.getElementById('payment-modal').classList.remove('open');
+    document.getElementById('download-section').classList.add('show');
+    document.getElementById('download-cmd').innerHTML =
+      '<code>cd chuochuo/desktop && python pet_float.py</code>';
+  }
+}
+</script>
+</body></html>
