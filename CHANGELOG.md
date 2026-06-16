@@ -2,6 +2,25 @@
 
 All notable changes to Codebase Health Monitor (CHM).
 
+## [0.3.0] — 2026-06-16
+
+### Added
+- **Dead code detection** 💀 — Identifies files untouched for 6+ months
+- **Dependency analysis** 🔗 — Import coupling, circular dep detection
+- **Test coverage estimation** 🧪 — Source↔test file matching by naming convention
+- **Duplication detection** 📋 — Cross-file duplicate line detection
+- **`chm init`** — Interactive onboarding wizard with baseline snapshot
+- **4 new CLI commands**: `deadcode`, `deps`, `coverage`, `duplicates`
+- **4 new MCP tools**: `get_dead_code`, `get_dependencies`, `get_test_coverage`, `get_duplication`
+- Health score now factors all 8 dimensions (was 4)
+- Tutorial documentation (`docs/TUTORIAL.md`)
+- Competitive analysis report (`marketing/competitive-analysis-2026.md`)
+
+### Changed
+- CLI expanded from 10 → 14 commands
+- MCP tools expanded from 8 → 12 tools + 1 resource
+- Analysis dimensions: 4 → 8
+
 ## [0.2.0] — 2026-06-15
 
 ### Added

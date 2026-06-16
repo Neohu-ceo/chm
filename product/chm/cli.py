@@ -446,5 +446,82 @@ def duplicates(path: str):
             click.echo(f"   📋 {d['file_a']} ↔ {d['file_b']} ({d['shared_lines']} lines)")
 
 
+@main.command()
+@click.argument("path", default=".", type=click.Path(exists=True))
+def init(path: str):
+    """Initialize CHM for a project — guided onboarding wizard.
+
+    Takes a first snapshot, sets up config, and shows next steps.
+    """
+    repo_path = Path(path).resolve()
+
+    try:
+        collector = GitCollector(str(repo_path))
+    except ValueError as e:
+        click.echo(f"❌ {e}", err=True)
+        sys.exit(1)
+
+    # Fancy header
+    click.echo(f"""
+{click.style('╔══════════════════════════════════════════╗', fg='blue')}
+{click.style('║', fg='blue')}  {click.style('🏠 Welcome to Lighthouse Analytics!', bold=True)}  {click.style('║', fg='blue')}
+{click.style('╚══════════════════════════════════════════╝', fg='blue')}
+""")
+
+    click.echo(f"  Repository: {click.style(collector.repo_name(), fg='cyan')}")
+    click.echo(f"  Path: {repo_path}")
+    click.echo(f"  Total commits: {collector.total_commits()}")
+    click.echo(f"  Total files: {collector.total_files()}")
+    click.echo()
+
+    # Step 1: First snapshot
+    click.echo(f"  {click.style('📸 Step 1: Taking baseline snapshot...', fg='yellow')}")
+    from chm.analyzers.trends import TrendTracker
+    tracker = TrendTracker(str(repo_path))
+    snap = tracker.snapshot(collector)
+    click.echo(f"  ✅ Baseline saved ({snap['timestamp'][:19]})")
+
+    # Step 2: Quick analysis
+    click.echo(f"\n  {click.style('🔍 Step 2: Quick health scan...', fg='yellow')}")
+    hotspots = HotspotAnalyzer(collector).analyze()
+    authors = AuthorAnalyzer(collector).analyze()
+    pulse = PulseAnalyzer(collector).analyze()
+    complexity = ComplexityAnalyzer(collector).analyze()
+    dead_code = DeadCodeAnalyzer(collector).analyze()
+    test_coverage = TestCoverageAnalyzer(collector).analyze()
+
+    # Quick summary
+    bf = authors.get("bus_factor", "?")
+    bf_warn = "⚠️" if (isinstance(bf, int) and bf <= 2) else "✅"
+    score = TerminalReporter()._calculate_health_score({
+        "hotspots": hotspots, "authors": authors, "pulse": pulse,
+        "complexity": complexity, "dead_code": dead_code,
+        "test_coverage": test_coverage, "dependencies": {}, "duplication": {},
+    })
+
+    click.echo(f"  {bf_warn} Bus Factor: {bf}")
+    click.echo(f"  🔥 Hotspots: {len(hotspots['top_hotspots'])} files")
+    click.echo(f"  🧪 Test Coverage: {test_coverage.get('coverage_grade', '?')} ({test_coverage.get('estimated_coverage_pct', 0)}%)")
+    click.echo(f"  🧬 Health Score: {score}/100")
+
+    # Step 3: What's next
+    click.echo(f"""
+{click.style('  ── Next Steps ──', bold=True)}
+  {click.style('1.', fg='green')} Review your report:  {click.style('chm analyze .', fg='cyan')}
+  {click.style('2.', fg='green')} Generate HTML:      {click.style('chm analyze . --report html -o report.html', fg='cyan')}
+  {click.style('3.', fg='green')} Track trends:       {click.style('chm snapshot .', fg='cyan')} (run weekly)
+  {click.style('4.', fg='green')} Compare snapshots:  {click.style('chm compare .', fg='cyan')}
+  {click.style('5.', fg='green')} Share with team:    {click.style('open report.html', fg='cyan')}
+
+  Run {click.style('chm --help', bold=True)} to see all 14 commands.
+""")
+
+    # Step 4: SaaS mention
+    click.echo(f"  {click.style('💡 Pro tip:', fg='yellow')} Get HTML reports + team dashboards at")
+    click.echo(f"     {click.style('http://localhost:5001', fg='cyan')} (SaaS running locally)")
+
+    click.echo(f"\n{click.style('  🎉 Ready! Lighthouse is watching your codebase.', fg='green')}\n")
+
+
 if __name__ == "__main__":
     main()
