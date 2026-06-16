@@ -681,5 +681,88 @@ def demo():
         pass
 
 
+@main.command()
+@click.option("--get", "-g", multiple=True, help="Get config value(s)")
+@click.option("--set", "-s", nargs=2, multiple=True, help="Set key=value")
+@click.option("--reset", is_flag=True, help="Reset to defaults")
+def config(get, set, reset):
+    """View or change CHM configuration.
+
+    \b
+    Examples:
+      chm config                     # Show all settings
+      chm config --get max_commits   # Get a specific value
+      chm config --set max_commits 1000  # Change a setting
+      chm config --reset             # Reset to defaults
+    """
+    from chm.config import load, save, set_value, list_all, reset as reset_config, show_config, CONFIG_FILE
+
+    if reset:
+        reset_config()
+        click.echo("✅ Configuration reset to defaults")
+        return
+
+    changes = 0
+    for key, val in set:
+        try:
+            # Auto-convert types
+            if val.lower() == "true":
+                val = True
+            elif val.lower() == "false":
+                val = False
+            elif val.isdigit():
+                val = int(val)
+            set_value(key, val)
+            click.echo(f"  ✅ {key} = {val}")
+            changes += 1
+        except Exception as e:
+            click.echo(f"  ❌ {key}: {e}")
+
+    if get:
+        for key in get:
+            val = load().get(key, "NOT SET")
+            click.echo(f"  {key} = {val}")
+        return
+
+    if not changes and not get:
+        click.echo(f"📋 CHM Configuration ({CONFIG_FILE}):\n")
+        click.echo(show_config())
+
+
+@main.command()
+@click.argument("path", default=".", type=click.Path(exists=True))
+@click.option("--slack", help="Slack webhook URL")
+@click.option("--discord", help="Discord webhook URL")
+@click.option("--webhook", help="Generic webhook URL")
+def notify(path: str, slack: str, discord: str, webhook: str):
+    """Send a health report to Slack, Discord, or a webhook.
+
+    \b
+    Examples:
+      chm notify . --slack https://hooks.slack.com/...
+      chm notify . --discord https://discord.com/api/webhooks/...
+    """
+    from chm.notify import send_slack, send_discord, send_webhook
+
+    repo_path = str(Path(path).resolve())
+    try:
+        GitCollector(repo_path)
+    except ValueError as e:
+        click.echo(f"❌ {e}", err=True)
+        sys.exit(1)
+
+    if slack:
+        ok = send_slack(repo_path, slack)
+        click.echo("✅ Sent to Slack" if ok else "❌ Slack send failed")
+    elif discord:
+        ok = send_discord(repo_path, discord)
+        click.echo("✅ Sent to Discord" if ok else "❌ Discord send failed")
+    elif webhook:
+        ok = send_webhook(repo_path, webhook)
+        click.echo("✅ Sent to webhook" if ok else "❌ Webhook send failed")
+    else:
+        click.echo("Please specify --slack, --discord, or --webhook URL")
+
+
 if __name__ == "__main__":
     main()
