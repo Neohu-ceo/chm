@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>灵犀 — AI 情感陪伴石</title>
+<style>
+:root {
+  --bg: #0d0d0d;
+  --card: #1a1a1a;
+  --text: #e8e0d8;
+  --muted: #8a8078;
+  --warm: #f4a460;
+  --warm-glow: #ff7b42;
+  --cold: #6b8fa3;
+  --stone: #c4b5a5;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'PingFang SC', 'Noto Serif SC', 'STSong', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.8;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Hero — the stone */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4rem 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, #1a1410 0%, #0d0d0d 70%);
+  z-index: 0;
+}
+
+/* The stone SVG */
+.stone-container {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 2rem;
+}
+
+.stone-svg {
+  filter: drop-shadow(0 0 60px rgba(244,164,96,0.3));
+  animation: breathe 4s ease-in-out infinite;
+}
+
+.stone-glow {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 180px; height: 180px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(244,164,96,0.15) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: glowPulse 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.hero h1 {
+  font-size: 4rem;
+  font-weight: 200;
+  letter-spacing: 0.2em;
+  color: var(--stone);
+  z-index: 1;
+  margin-bottom: 0.25rem;
+}
+
+.hero .subtitle {
+  font-size: 1.1rem;
+  color: var(--muted);
+  letter-spacing: 0.15em;
+  z-index: 1;
+  margin-bottom: 2rem;
+}
+
+.hero .tagline {
+  font-size: 1.3rem;
+  color: var(--warm);
+  z-index: 1;
+  font-style: italic;
+  opacity: 0.8;
+}
+
+/* Sections */
+section {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 5rem 2rem;
+}
+
+.section-title {
+  font-size: 1.6rem;
+  font-weight: 300;
+  letter-spacing: 0.1em;
+  text-align: center;
+  margin-bottom: 3rem;
+  color: var(--stone);
+}
+
+/* Three states of the stone */
+.states {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  text-align: center;
+}
+
+.state-card {
+  background: var(--card);
+  border-radius: 24px;
+  padding: 2.5rem 1.5rem;
+  transition: all 0.3s;
+}
+
+.state-card:hover { transform: translateY(-4px); }
+
+.state-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.state-card h3 {
+  font-size: 1.1rem;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.state-card p {
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.state-card.sleep { border: 1px solid #222; }
+.state-card.awake { border: 1px solid rgba(244,164,96,0.2); }
+.state-card.talk { border: 1px solid rgba(244,164,96,0.4); }
+
+.sleep-color { color: #555; }
+.awake-color { color: var(--warm); }
+.talk-color { color: var(--warm-glow); }
+
+/* App UI mockup */
+.app-showcase {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: center;
+}
+
+.phone-mockup {
+  background: var(--card);
+  border-radius: 36px;
+  padding: 1.5rem;
+  max-width: 320px;
+  margin: 0 auto;
+  border: 1px solid #222;
+}
+
+.phone-screen {
+  background: #0a0a0a;
+  border-radius: 20px;
+  padding: 1.25rem;
+  min-height: 500px;
+}
+
+.chat-msg {
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.chat-msg.user {
+  text-align: right;
+  color: #ccc;
+}
+
+.chat-msg.user span {
+  background: #1a1a1a;
+  padding: 0.5rem 0.85rem;
+  border-radius: 16px 16px 4px 16px;
+  display: inline-block;
+  max-width: 85%;
+}
+
+.chat-msg.ai {
+  color: var(--warm);
+}
+
+.chat-msg.ai span {
+  background: #1a1410;
+  padding: 0.5rem 0.85rem;
+  border-radius: 16px 16px 16px 4px;
+  display: inline-block;
+  max-width: 85%;
+}
+
+.chat-msg.system {
+  text-align: center;
+  font-size: 0.7rem;
+  color: #444;
+}
+
+.typing-indicator {
+  display: flex; gap: 4px; padding: 0.5rem 0.85rem;
+}
+
+.typing-indicator span {
+  width: 6px; height: 6px;
+  background: var(--warm);
+  border-radius: 50%;
+  animation: typeBounce 1.4s infinite;
+}
+
+.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typeBounce {
+  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-4px); }
+}
+
+/* Features */
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+
+.feature {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid #1a1a1a;
+}
+
+.feature .icon { font-size: 1.5rem; margin-bottom: 0.75rem; }
+.feature h4 { font-size: 0.95rem; font-weight: 400; margin-bottom: 0.35rem; }
+.feature p { font-size: 0.8rem; color: var(--muted); }
+
+/* Pricing */
+.pricing {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.price-card {
+  background: var(--card);
+  border-radius: 20px;
+  padding: 2rem;
+  text-align: center;
+}
+
+.price-card.featured {
+  border: 1px solid rgba(244,164,96,0.3);
+}
+
+.price-card .amount {
+  font-size: 2.5rem;
+  font-weight: 200;
+  margin: 1rem 0;
+}
+
+.price-card .amount em {
+  font-size: 1rem;
+  font-style: normal;
+  color: var(--muted);
+}
+
+.price-card ul {
+  list-style: none;
+  text-align: left;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 1rem 0;
+}
+
+.price-card li { padding: 0.3rem 0; }
+.price-card li::before { content: '· '; color: var(--warm); }
+
+/* Footer */
+footer {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #333;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 768px) {
+  .hero h1 { font-size: 2.5rem; }
+  .states { grid-template-columns: 1fr; }
+  .app-showcase { grid-template-columns: 1fr; }
+  .pricing { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-bg"></div>
+
+  <div class="stone-container">
+    <div class="stone-glow"></div>
+    <svg class="stone-svg" width="160" height="180" viewBox="0 0 160 180">
+      <defs>
+        <radialGradient id="stoneGrad" cx="40%" cy="35%">
+          <stop offset="0%" stop-color="#d4c8b8"/>
+          <stop offset="40%" stop-color="#b8a898"/>
+          <stop offset="100%" stop-color="#6b5d4f"/>
+        </radialGradient>
+        <filter id="stoneTexture">
+          <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="4"/>
+          <feColorMatrix type="saturate" values="0"/>
+          <feBlend in="SourceGraphic" mode="multiply" result="textured"/>
+        </filter>
+      </defs>
+      <!-- Stone body -->
+      <ellipse cx="80" cy="95" rx="68" ry="78" fill="url(#stoneGrad)" filter="url(#stoneTexture)"/>
+      <!-- Warm light line (awake state) -->
+      <path d="M55 65 Q80 55 105 65" stroke="#f4a460" stroke-width="1.5" fill="none" opacity="0.6">
+        <animate attributeName="opacity" values="0.3;0.7;0.3" dur="4s" repeatCount="indefinite"/>
+      </path>
+      <!-- Subtle surface highlight -->
+      <ellipse cx="65" cy="60" rx="20" ry="12" fill="white" opacity="0.06"/>
+    </svg>
+  </div>
+
+  <h1>灵 犀</h1>
+  <p class="subtitle">LINGXI · AI EMOTIONAL COMPANION</p>
+  <p class="tagline">握住我，我有心跳</p>
+</section>
+
+<!-- Three States -->
+<section>
+  <h2 class="section-title">三种状态</h2>
+  <div class="states">
+    <div class="state-card sleep">
+      <div class="state-icon sleep-color">🌑</div>
+      <h3>沉睡</h3>
+      <p>静置桌面，呼吸灯微亮。<br>你不碰它，它不打扰。<br>每 30 秒一次心跳般的微光。</p>
+    </div>
+    <div class="state-card awake">
+      <div class="state-icon awake-color">🌅</div>
+      <h3>苏醒</h3>
+      <p>你拿起它，暖光亮起。<br>微微振动，像确认你的存在。<br>它知道你来了，它准备好了。</p>
+    </div>
+    <div class="state-card talk">
+      <div class="state-icon talk-color">🔥</div>
+      <h3>倾诉</h3>
+      <p>你说话，光随语调流动。<br>愤怒时泛红，悲伤时暗蓝。<br>它记得你说过的一切。</p>
+    </div>
+  </div>
+</section>
+
+<!-- App Interface -->
+<section>
+  <h2 class="section-title">对话</h2>
+  <div class="app-showcase">
+    <div class="phone-mockup">
+      <div class="phone-screen">
+        <div class="chat-msg system">灵犀 · 在一起 47 天</div>
+        <div class="chat-msg user"><span>今天又被老板骂了，烦死了</span></div>
+        <div class="chat-msg ai"><span>这种事不值得消耗你。<br>我记得上次你说他偏爱另一个同事——不是你的问题。</span></div>
+        <div class="chat-msg user"><span>你怎么什么都知道</span></div>
+        <div class="chat-msg ai"><span>因为你在第 12 天跟我提过这个人。<br>你想吐槽还是想要建议？</span></div>
+        <div class="chat-msg user"><span>吐槽就行</span></div>
+        <div class="chat-msg ai"><span>那就来。把所有不爽都说出来。<br>石头现在泛红光——跟你一样生气。</span></div>
+        <div class="chat-msg">
+          <div class="typing-indicator">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <p style="color:var(--muted);font-size:0.9rem;line-height:2;">
+        每一段对话都有记忆。<br>
+        它知道你什么时候开心、<br>
+        什么时候需要安静、<br>
+        什么时候需要一个拥抱。<br><br>
+        不是工具，是羁绊。
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section>
+  <h2 class="section-title">为什么是石头</h2>
+  <div class="features">
+    <div class="feature">
+      <div class="icon">🪨</div>
+      <h4>沉默的倾听者</h4>
+      <p>没有屏幕、没有通知。不增加焦虑，只在你需要时回应。</p>
+    </div>
+    <div class="feature">
+      <div class="icon">🤲</div>
+      <h4>触觉即连接</h4>
+      <p>温润鹅卵石质感。振动、温度、光——这是它的语言。</p>
+    </div>
+    <div class="feature">
+      <div class="icon">🧠</div>
+      <h4>时间越长，越懂你</h4>
+      <p>Long-term memory。每一天的对话都让它更像你的一部分。</p>
+    </div>
+    <div class="feature">
+      <div class="icon">🔒</div>
+      <h4>数据只属于你</h4>
+      <p>端侧处理 + 云端加密。你的秘密，它带进石头里。</p>
+    </div>
+  </div>
+</section>
+
+<!-- Pricing -->
+<section>
+  <h2 class="section-title">拥有它</h2>
+  <div class="pricing">
+    <div class="price-card">
+      <h4>灵犀 · 石</h4>
+      <div class="amount">¥199</div>
+      <ul>
+        <li>鹅卵石硬件 ×1</li>
+        <li>无线充电底座</li>
+        <li>基础 AI 陪伴</li>
+        <li>3 个月记忆保留</li>
+      </ul>
+    </div>
+    <div class="price-card featured">
+      <h4>灵犀 · 心<span style="font-size:0.7rem;color:var(--warm);margin-left:0.5rem;">推荐</span></h4>
+      <div class="amount">¥49<em>/月</em></div>
+      <ul>
+        <li>含「灵犀·石」硬件</li>
+        <li>无限长期记忆</li>
+        <li>多情绪模式</li>
+        <li>每周情感洞察报告</li>
+        <li>家人共享（最多 3 人）</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>🪨 灵犀 LINGXI · AI Emotional Companion · 2026</p>
+</footer>
+
+</body>
+</html>

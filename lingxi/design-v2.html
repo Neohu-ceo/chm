@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>戳戳 — 桌面解压互动精灵</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card: #fff;
+  --text: #2d2a26;
+  --muted: #8c8580;
+  --accent: #ff6b35;
+  --orange: #ff8c42;
+  --blue: #5b9bd5;
+  --green: #6baf6b;
+  --pink: #e8879a;
+  --yellow: #f0c040;
+  --border: #e8e4df;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'PingFang SC', -apple-system, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Hero */
+.hero {
+  background: linear-gradient(180deg, #fff5f0 0%, #faf8f5 100%);
+  text-align: center;
+  padding: 5rem 2rem 4rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-badge {
+  display: inline-block;
+  background: var(--accent);
+  color: white;
+  padding: 0.3rem 1rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  margin-bottom: 1.5rem;
+}
+
+.hero h1 {
+  font-size: 5rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  margin-bottom: 0.5rem;
+  line-height: 1.1;
+}
+
+.hero h1 .accent { color: var(--accent); }
+
+.hero .sub {
+  font-size: 1.2rem;
+  color: var(--muted);
+  margin-bottom: 2rem;
+}
+
+/* The device visualization */
+.device-showcase {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  margin: 3rem 0 1rem;
+  flex-wrap: wrap;
+}
+
+.device {
+  width: 180px;
+  height: 180px;
+  border-radius: 36px;
+  background: #fff;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: transform 0.2s;
+}
+
+.device:hover { transform: scale(1.05); }
+
+/* Pixel face */
+.pixel-face {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  width: 100px;
+  height: 100px;
+  gap: 2px;
+}
+
+.pixel {
+  border-radius: 3px;
+  transition: all 0.3s;
+}
+
+.pixel.on-black { background: #2d2a26; }
+.pixel.on-orange { background: var(--accent); }
+.pixel.on-pink { background: var(--pink); }
+.pixel.dim { background: #e8e4df; }
+
+/* Animation: face expression changes */
+.device:nth-child(1) .pixel-face { animation: faceHappy 3s ease-in-out infinite; }
+.device:nth-child(2) .pixel-face { animation: faceSurprised 4s ease-in-out infinite; }
+.device:nth-child(3) .pixel-face { animation: faceSleepy 3.5s ease-in-out infinite; }
+
+@keyframes faceHappy {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+@keyframes faceSurprised {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.1); }
+}
+
+@keyframes faceSleepy {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.device-label {
+  text-align: center;
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.device-desc {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+/* Section */
+section {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 5rem 2rem;
+}
+
+.section-title {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 1rem;
+}
+
+.section-sub {
+  text-align: center;
+  color: var(--muted);
+  font-size: 1rem;
+  margin-bottom: 3rem;
+}
+
+/* Scenario cards */
+.scenarios {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+}
+
+.scenario {
+  background: var(--card);
+  border-radius: 20px;
+  padding: 1.75rem;
+  border: 1px solid var(--border);
+  transition: all 0.2s;
+}
+
+.scenario:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
+
+.scenario .emoji { font-size: 2rem; margin-bottom: 0.5rem; }
+.scenario h4 { font-size: 1rem; font-weight: 700; margin-bottom: 0.35rem; }
+.scenario p { font-size: 0.85rem; color: var(--muted); line-height: 1.7; }
+.scenario .tag {
+  display: inline-block;
+  background: #f5f2ee;
+  padding: 0.15rem 0.6rem;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  color: var(--muted);
+  margin-top: 0.75rem;
+}
+
+/* How it works */
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  text-align: center;
+}
+
+.step-num {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0 auto 1rem;
+}
+
+.step h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem; }
+.step p { font-size: 0.8rem; color: var(--muted); }
+
+/* Price */
+.pricing-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  max-width: 550px;
+  margin: 0 auto;
+}
+
+.price-box {
+  background: var(--card);
+  border-radius: 20px;
+  padding: 2rem;
+  text-align: center;
+  border: 1px solid var(--border);
+}
+
+.price-box.pop { border: 2px solid var(--accent); }
+
+.price-box .device-name { font-weight: 700; font-size: 1.05rem; margin-bottom: 0.25rem; }
+.price-box .device-tag { font-size: 0.75rem; color: var(--muted); margin-bottom: 1rem; }
+.price-box .price { font-size: 2.8rem; font-weight: 900; }
+.price-box .price span { font-size: 0.9rem; font-weight: 400; color: var(--muted); }
+.price-box .note { font-size: 0.75rem; color: var(--muted); margin-top: 0.75rem; }
+
+/* Market validation */
+.market-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  text-align: center;
+}
+
+.market-stat {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+}
+
+.market-stat .big { font-size: 1.8rem; font-weight: 800; color: var(--accent); }
+.market-stat .label { font-size: 0.75rem; color: var(--muted); margin-top: 0.25rem; }
+
+footer {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 768px) {
+  .hero h1 { font-size: 3rem; }
+  .steps, .market-grid { grid-template-columns: 1fr; }
+  .pricing-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-badge">🆕 OFFICE DESK COMPANION</div>
+  <h1>戳<span class="accent">戳</span></h1>
+  <p class="sub">桌面上最治愈的小东西 · 办公室无聊的解药</p>
+
+  <div class="device-showcase">
+    <!-- Happy face -->
+    <div>
+      <div class="device">
+        <div class="pixel-face">
+          <span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel on-black"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel on-black"></span><span class="pixel dim"></span><span class="pixel dim"></span>
+          <span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span>
+          <span class="pixel on-black"></span><span class="pixel dim"></span><span class="pixel on-black"></span><span class="pixel dim"></span><span class="pixel on-black"></span><span class="pixel dim"></span><span class="pixel on-black"></span><span class="pixel dim"></span>
+          <span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span>
+          <span class="pixel dim"></span><span class="pixel on-black"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel on-black"></span><span class="pixel dim"></span><span class="pixel dim"></span>
+          <span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel on-black"></span><span class="pixel dim"></span><span class="pixel on-black"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span>
+          <span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel on-black"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span>
+          <span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel on-orange"></span><span class="pixel dim"></span><span class="pixel on-orange"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span>
+        </div>
+      </div>
+      <div class="device-label">开心</div>
+      <div class="device-desc">老板批了你的方案</div>
+    </div>
+
+    <!-- Surprised face -->
+    <div>
+      <div class="device">
+        <div class="pixel-face">
+          <span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel on-black"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel on-black"></span><span class="pixel dim"></span><span class="pixel dim"></span>
+          <span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span>
+          <span class="pixel dim"></span><span class="pixel on-black"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel on-black"></span><span class="pixel dim"></span><span class="pixel dim"></span>
+          <span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span>
+          <span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span>
+          <span class="pixel dim"></span><span class="pixel on-black"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel on-black"></span><span class="pixel dim"></span><span class="pixel dim"></span>
+          <span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel on-black"></span><span class="pixel on-black"></span><span class="pixel on-black"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span>
+          <span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel on-pink"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span>
+        </div>
+      </div>
+      <div class="device-label">惊讶</div>
+      <div class="device-desc">工资到账比预期多</div>
+    </div>
+
+    <!-- Sleepy face -->
+    <div>
+      <div class="device">
+        <div class="pixel-face">
+          <span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span>
+          <span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span>
+          <span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel on-black"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span>
+          <span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span>
+          <span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span>
+          <span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span>
+          <span class="pixel dim"></span><span class="pixel on-black"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel on-black"></span><span class="pixel dim"></span>
+          <span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span><span class="pixel dim"></span>
+        </div>
+      </div>
+      <div class="device-label">困了</div>
+      <div class="device-desc">下午三点，会议室里</div>
+    </div>
+  </div>
+</section>
+
+<!-- Market validation -->
+<section>
+  <div class="market-grid">
+    <div class="market-stat">
+      <div class="big">1.2亿</div>
+      <div class="label">中国白领</div>
+    </div>
+    <div class="market-stat">
+      <div class="big">8h/天</div>
+      <div class="label">平均工位时间</div>
+    </div>
+    <div class="market-stat">
+      <div class="big">875亿</div>
+      <div class="label">潮玩市场(2025)</div>
+    </div>
+    <div class="market-stat">
+      <div class="big">70%</div>
+      <div class="label">毛利率</div>
+    </div>
+  </div>
+</section>
+
+<!-- Use cases -->
+<section>
+  <h2 class="section-title">办公室无聊时刻 × 戳戳</h2>
+  <p class="section-sub">每一个无聊时刻，都有一个互动方式</p>
+
+  <div class="scenarios">
+    <div class="scenario">
+      <div class="emoji">😤</div>
+      <h4>开会开到崩溃</h4>
+      <p>手在桌下捏它。压力越大，戳得越快——它脸越皱。每戳 100 次解锁一个新表情。无声解压，同事看不到。</p>
+      <span class="tag">高频使用场景</span>
+    </div>
+
+    <div class="scenario">
+      <div class="emoji">⏰</div>
+      <h4>下午三点，困到不行</h4>
+      <p>它比你先困——屏幕上的小脸眼睛半闭。碰一下，它打个激灵清醒过来，顺便提醒你站起来走走。</p>
+      <span class="tag">健康提醒</span>
+    </div>
+
+    <div class="scenario">
+      <div class="emoji">🎉</div>
+      <h4>周五下班倒计时</h4>
+      <p>每周五下午 4 点自动进入「派对模式」——小脸开始跳舞。整个办公室的戳戳如果都在同一网络，会一起倒计时。</p>
+      <span class="tag">社交传播点</span>
+    </div>
+
+    <div class="scenario">
+      <div class="emoji">💬</div>
+      <h4>同事路过你的工位</h4>
+      <p>「这是什么？」——每一次被问都是一次种草。三个同事买同款后，它们靠近时会互相打招呼。像电子宠物，但有社交。</p>
+      <span class="tag">病毒增长</span>
+    </div>
+
+    <div class="scenario">
+      <div class="emoji">📊</div>
+      <h4>想知道今天摸了多少鱼</h4>
+      <p>App 里查看周报：戳了多少次、最活跃时段、情绪分布。跟同事 PK「摸鱼排行榜」——隐私模式可选。</p>
+      <span class="tag">数据上瘾</span>
+    </div>
+
+    <div class="scenario">
+      <div class="emoji">🎁</div>
+      <h4>不知道送同事什么礼物</h4>
+      <p>¥149 的桌面小东西——便宜、有趣、不暧昧。公司团购还能定制 Logo 和专属表情。HR 喜欢，员工更喜欢。</p>
+      <span class="tag">B2B 渠道</span>
+    </div>
+  </div>
+</section>
+
+<!-- How it works -->
+<section>
+  <h2 class="section-title">三步开始</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h3>放桌上</h3>
+      <p>拆开包装，放在工位。<br>自动开机，小脸亮起。</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h3>戳它</h3>
+      <p>无聊了就戳。按顶部、<br>捏两侧、摇晃——<br>每种互动触发不同反应。</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h3>上瘾</h3>
+      <p>它会记住你的习惯。<br>越用越懂你。<br>总有一天你会回头看它。</p>
+    </div>
+  </div>
+</section>
+
+<!-- Pricing -->
+<section>
+  <h2 class="section-title">定价</h2>
+  <div class="pricing-row">
+    <div class="price-box">
+      <div class="device-name">戳戳 · 基础版</div>
+      <div class="device-tag">硬件 + 6 个基础表情</div>
+      <div class="price">¥149</div>
+      <div class="note">一次性购买 · 永久使用</div>
+    </div>
+    <div class="price-box pop">
+      <div class="device-name" style="display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+        戳戳 · Pro
+        <span style="background:var(--accent);color:white;font-size:0.65rem;padding:0.15rem 0.5rem;border-radius:10px;">推荐</span>
+      </div>
+      <div class="device-tag">硬件 + 无限表情 + App 会员</div>
+      <div class="price">¥149<span> + ¥19/月</span></div>
+      <div class="note">首个 3 个月会员免费</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>🖐️ 戳戳 CHUOCHUO · Desk Companion · 2026 · 正在设计阶段</p>
+</footer>
+
+</body>
+</html>
