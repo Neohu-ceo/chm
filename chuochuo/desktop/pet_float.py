@@ -48,6 +48,10 @@ class FloatPet:
         self.coins = 0
         self.streak = 0
         self.total_pokes = 0
+        self.species_id = None
+        self.species = None
+        self.shiny = False
+        self.hatching = False
         self.msg_id = None
         self.drag_ox = 0
         self.drag_oy = 0
@@ -95,30 +99,47 @@ class FloatPet:
 
     def render(self):
         self.c.delete("all")
-
-        # Glow background
         self.c.create_rectangle(0, 0, 220, 360, fill="#1a1a1a", outline="")
 
-        # Pixel grid (16×16)
-        pat = PATTERNS.get(self.emotion, PATTERNS["happy"])
-        ps = 12  # pixel size
-        ox, oy = 14, 8
+        color = "#ff6b35"
+        if self.species and self.species.get("color"):
+            color = self.species["color"]
 
-        for r in range(16):
-            for c in range(16):
-                ch = pat[r][c] if r < len(pat) and c < len(pat[r]) else " "
-                if ch == "#":
-                    self.c.create_rectangle(
-                        ox + c*ps, oy + r*ps, ox + c*ps + ps-1, oy + r*ps + ps-1,
-                        fill="#ff6b35", outline=""
-                    )
+        ps, ox, oy = 12, 14, 8
 
-        # Name + Level
-        self.c.create_text(110, 215, text=self.name, fill="#e0d8d0",
-                           font=("PingFang SC", 13, "bold"))
-        stage_str = f"Lv.{self.level} · {self.stage_name}"
-        self.c.create_text(110, 233, text=stage_str, fill="#ff6b35",
-                           font=("PingFang SC", 9))
+        # Not yet hatched — show egg
+        if not self.species_id:
+            self._draw_egg(ox, oy, ps, color)
+        else:
+            # Draw species pixel art
+            pat = PATTERNS.get(self.emotion, PATTERNS["happy"])
+            for r in range(16):
+                for c in range(16):
+                    ch = pat[r][c] if r < len(pat) and c < len(pat[r]) else " "
+                    if ch == "#":
+                        self.c.create_rectangle(
+                            ox + c*ps, oy + r*ps, ox + c*ps + ps-1, oy + r*ps + ps-1,
+                            fill=color, outline=""
+                        )
+
+        # Name + species
+        name_str = self.name
+        if self.species:
+            name_str = f"{self.species['name']} · {self.name}"
+        self.c.create_text(110, 215, text=name_str[:14], fill="#e0d8d0",
+                           font=("PingFang SC", 11, "bold"))
+
+        type_str = self.species["type"] if self.species else "蛋"
+        if self.shiny:
+            type_str = "✨" + type_str
+        stage_str = f"Lv.{self.level} · {type_str} · {self.stage_name}"
+        self.c.create_text(110, 233, text=stage_str, fill=color,
+                           font=("PingFang SC", 8))
+
+        # Hatching animation message
+        if self.hatching:
+            self.c.create_text(110, 150, text="🥚 正在孵化...",
+                               fill="#fbbf24", font=("PingFang SC", 13, "bold"))
 
         # Stat bars
         bar_y = 250
@@ -153,6 +174,25 @@ class FloatPet:
         if val > 0:
             self.c.create_rectangle(52, y, 52+int(148*val/100), y+8,
                                      fill=color, outline="")
+
+    def _draw_egg(self, ox, oy, ps, color):
+        """Draw an egg that wobbles."""
+        import time as _t
+        wobble = int(_t.time() * 3) % 3 - 1  # subtle wobble
+        # Egg shape
+        egg_ox = ox + 14 + wobble
+        egg_oy = oy + 14
+        self.c.create_oval(egg_ox+8, egg_oy, egg_ox+64, egg_oy+72,
+                           fill="#fef9ef", outline="#e8dcc8", width=2)
+        # Warm glow inside
+        self.c.create_oval(egg_ox+24, egg_oy+20, egg_ox+48, egg_oy+48,
+                           fill=color, outline="")
+        # Crack lines (subtle)
+        self.c.create_line(egg_ox+30, egg_oy+10, egg_ox+20, egg_oy+40,
+                           fill="#e8dcc8", width=1)
+        # Label
+        self.c.create_text(egg_ox+36, egg_oy+85, text="🥚 戳戳蛋",
+                           fill=color, font=("PingFang SC", 10))
 
     # ── Messages ─────────────────────────────────────────────────
 
@@ -200,6 +240,16 @@ class FloatPet:
                 d.get("total_plays", 0), d.get("total_sleeps", 0),
             ])
             self.emotion = d.get("emotion", self.emotion)
+            # Species
+            old_species = self.species_id
+            self.species_id = d.get("species_id")
+            self.species = d.get("species")
+            self.shiny = d.get("shiny", False)
+            # Detect hatching
+            if self.species_id and not old_species:
+                self.hatching = True
+                self.render()
+                self.r.after(3000, self._hatch_complete)
 
     def _auto_refresh(self):
         self._load_state()
@@ -329,6 +379,13 @@ class FloatPet:
 
     def _drag_move(self, e):
         self.r.geometry(f"+{e.x_root - self.drag_ox}+{e.y_root - self.drag_oy}")
+
+    def _hatch_complete(self):
+        self.hatching = False
+        sp = self.species or {}
+        hint = sp.get("egg_hint", "蛋孵化了！")
+        self.msg(f"🎉 {sp.get('name','？')} 孵化了！\n{sp.get('desc','')}")
+        self.render()
 
     def _close(self):
         self.r.destroy()

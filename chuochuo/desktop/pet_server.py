@@ -40,6 +40,100 @@ ACCESSORIES = [
     {"id":"cat_ears","name":"猫耳","type":"hat","cost":400,"icon":"🐱"},
 ]
 
+# ── Pet Species ─────────────────────────────────────────────────
+
+SPECIES = {
+    "cat": {
+        "name": "糯米", "type": "猫猫", "rarity": "common", "color": "#ff9c6e",
+        "desc": "黏人小猫咪，平衡型伴侣", "personality": "黏人",
+        "egg_hint": "蛋在微微发暖...好像有猫叫？",
+        "evolve_stages": ["🥚","🐣","🐱","😸"],
+    },
+    "dragon": {
+        "name": "小龙", "type": "幼龙", "rarity": "rare", "color": "#ff6b6b",
+        "desc": "暴躁小火龙，戳击越多越亲近", "personality": "傲娇",
+        "egg_hint": "蛋壳很烫！里面有小爪子挠...",
+        "evolve_stages": ["🥚","🐣","🐉","🔥"],
+    },
+    "ghost": {
+        "name": "噗噗", "type": "幽灵", "rarity": "common", "color": "#c4b5fd",
+        "desc": "害羞小幽灵，夜间更活跃", "personality": "害羞",
+        "egg_hint": "蛋在飘...？！等等蛋怎么会飘",
+        "evolve_stages": ["🥚","🐣","👻","💫"],
+    },
+    "fox": {
+        "name": "灵灵", "type": "狐狸", "rarity": "uncommon", "color": "#f59e0b",
+        "desc": "聪明小狐狸，喂食多就会跟你", "personality": "机灵",
+        "egg_hint": "蛋壳上有火焰纹路，散发着烤面包香",
+        "evolve_stages": ["🥚","🐣","🦊","🌟"],
+    },
+    "bunny": {
+        "name": "团团", "type": "兔子", "rarity": "common", "color": "#fbcfe8",
+        "desc": "蹦蹦跳跳小白兔，玩耍狂魔", "personality": "活泼",
+        "egg_hint": "蛋自己在跳！咚咚咚咚...",
+        "evolve_stages": ["🥚","🐣","🐰","💝"],
+    },
+    "plant": {
+        "name": "芽芽", "type": "精灵", "rarity": "uncommon", "color": "#86efac",
+        "desc": "安静的植物精灵，按时睡觉就开花", "personality": "温柔",
+        "egg_hint": "一颗种子？它在发光，有青草香",
+        "evolve_stages": ["🥚","🐣","🌱","🌸"],
+    },
+    "penguin": {
+        "name": "冰冰", "type": "企鹅", "rarity": "rare", "color": "#93c5fd",
+        "desc": "冷酷小企鹅，连续打卡才愿意见你", "personality": "高冷",
+        "egg_hint": "蛋冰冷刺骨...但里面有心跳声",
+        "evolve_stages": ["🥚","🐣","🐧","❄️"],
+    },
+    "shiny": {
+        "name": "星尘", "type": "幻兽", "rarity": "legendary", "color": "#fbbf24",
+        "desc": "万中无一的闪光体！天选之蛋", "personality": "神秘",
+        "egg_hint": "✨ 蛋壳上布满星光...它选中了你 ✨",
+        "evolve_stages": ["🥚","🐣","🦄","👑"],
+    },
+}
+
+def determine_species(state):
+    """Determine which species hatches based on behavior patterns."""
+    # If already hatched, keep it
+    if state.get("species_id"):
+        return state["species_id"]
+
+    # Only hatch at level 2+
+    if state["level"] < 2 and state["stage"] < 1:
+        return None
+
+    # 1% legendary shiny chance
+    if random.random() < 0.01:
+        return "shiny"
+
+    pokes = state.get("total_pokes", 0)
+    feeds = state.get("total_feed", 0)
+    plays = state.get("total_plays", 0)
+    sleeps = state.get("total_sleeps", 0)
+    streak = state.get("streak_days", 0)
+
+    # Behavior-based determination
+    if streak >= 5:
+        return "penguin"  # Dedicated users get penguin
+    if feeds > pokes and feeds > plays:
+        return "fox"       # Feed-heavy → fox
+    if plays > pokes * 2:
+        return "bunny"     # Play-heavy → bunny
+    if sleeps > max(plays, pokes) * 0.8:
+        return "plant"     # Sleep-focused → plant spirit
+    if pokes > feeds * 3:
+        return "dragon"    # Poke-heavy → dragon
+    # Time-based bonus
+    h = datetime.now().hour
+    if 22 <= h or h <= 5:
+        if random.random() < 0.4:
+            return "ghost"  # Night owls get ghost
+
+    # Default: cat (balanced)
+    return "cat"
+
+
 DEFAULT_STATE = {
     "name": "戳戳", "level": 1, "xp": 0, "xp_to_next": 100, "stage": 0,
     "hunger": 80, "happiness": 80, "energy": 80,
@@ -48,6 +142,7 @@ DEFAULT_STATE = {
     "emotion": "happy", "unlocked_emotions": ["happy"],
     "coins": 50, "accessories": [], "wearing": {},
     "quest_progress": {}, "achievements": [],
+    "species_id": None, "species_hatched_at": None, "shiny": False,
 }
 
 def load_state():
@@ -88,11 +183,13 @@ def update_emotion(s):
 
 def add_xp(s, amount):
     s["xp"] += amount
+    leveled = False
     while s["xp"] >= s["xp_to_next"]:
         s["xp"] -= s["xp_to_next"]
         s["level"] += 1
         s["xp_to_next"] = int(s["xp_to_next"] * 1.3)
         s["coins"] += 25
+        leveled = True
         # Check stage evolution
         if s["level"] >= 10: s["stage"] = 3
         elif s["level"] >= 5: s["stage"] = 2
@@ -100,6 +197,13 @@ def add_xp(s, amount):
         # Unlock emotions
         if s["level"] >= 7 and "love" not in s["unlocked_emotions"]:
             s["unlocked_emotions"].append("love")
+    # Hatch egg at level 2
+    if leveled and s["level"] >= 2 and not s.get("species_id"):
+        sid = determine_species(s)
+        if sid:
+            s["species_id"] = sid
+            s["species_hatched_at"] = datetime.now().isoformat()
+            s["shiny"] = (sid == "shiny")
 
 def check_streak(s):
     today = datetime.now().date().isoformat()
@@ -157,6 +261,9 @@ def get_state_dict(s):
         "unlocked_emotions": s["unlocked_emotions"],
         "quests": [{"id":q["id"],"name":q["name"],"desc":q["desc"],"target":q["target"],"progress":s["quest_progress"].get(q["id"],0),"reward_xp":q["reward_xp"]} for q in QUESTS],
         "achievements": s["achievements"],
+        "species_id": s.get("species_id"),
+        "species": SPECIES.get(s.get("species_id"), None) if s.get("species_id") else None,
+        "shiny": s.get("shiny", False),
     }
 
 # ── HTTP Server ─────────────────────────────────────────────────
