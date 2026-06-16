@@ -13,6 +13,10 @@ from chm.analyzers import (
     AuthorAnalyzer,
     PulseAnalyzer,
     ComplexityAnalyzer,
+    DeadCodeAnalyzer,
+    DependencyAnalyzer,
+    TestCoverageAnalyzer,
+    DuplicationAnalyzer,
 )
 from chm.reporters import TerminalReporter, HTMLReporter, JSONReporter
 from chm.analyzers.trends import TrendTracker
@@ -65,6 +69,18 @@ def analyze(path: str, report: str, output: str, max_commits: int):
     click.echo("  ├─ Analyzing complexity...")
     complexity = ComplexityAnalyzer(collector).analyze()
 
+    click.echo("  ├─ Detecting dead code...")
+    dead_code = DeadCodeAnalyzer(collector).analyze()
+
+    click.echo("  ├─ Analyzing dependencies...")
+    dependencies = DependencyAnalyzer(collector).analyze()
+
+    click.echo("  ├─ Estimating test coverage...")
+    test_coverage = TestCoverageAnalyzer(collector).analyze()
+
+    click.echo("  ├─ Detecting duplication...")
+    duplication = DuplicationAnalyzer(collector).analyze()
+
     elapsed = time.time() - start_time
 
     # Assemble results
@@ -77,6 +93,10 @@ def analyze(path: str, report: str, output: str, max_commits: int):
         "authors": authors,
         "pulse": pulse,
         "complexity": complexity,
+        "dead_code": dead_code,
+        "dependencies": dependencies,
+        "test_coverage": test_coverage,
+        "duplication": duplication,
         "analysis_time_seconds": round(elapsed, 2),
     }
 
@@ -338,6 +358,92 @@ def mcp(http: int, host: str):
     if http:
         sys.argv.extend(["--http", str(http), "--host", host])
     mcp_main()
+
+
+@main.command()
+@click.argument("path", default=".", type=click.Path(exists=True))
+def deadcode(path: str):
+    """Detect files that haven't been modified recently (potential dead code)."""
+    try:
+        collector = GitCollector(str(Path(path).resolve()))
+    except ValueError as e:
+        click.echo(f"❌ {e}", err=True)
+        sys.exit(1)
+
+    data = DeadCodeAnalyzer(collector).analyze()
+    click.echo(f"\n💀 Dead Code Analysis — {collector.repo_name()}")
+    click.echo(f"   Stale files: {data['total_stale']}")
+    click.echo(f"   Never touched: {data['total_never_touched']}")
+    click.echo(f"   Staleness ratio: {data['staleness_ratio']:.1%}")
+
+    if data["very_stale_files"]:
+        click.echo(f"\n   {click.style('Very Stale (1+ year):', 'red')}")
+        for f in data["very_stale_files"][:10]:
+            click.echo(f"   💀 {f['file']} ({f['months_stale']} months)")
+
+
+@main.command()
+@click.argument("path", default=".", type=click.Path(exists=True))
+def deps(path: str):
+    """Analyze dependencies and coupling between files."""
+    try:
+        collector = GitCollector(str(Path(path).resolve()))
+    except ValueError as e:
+        click.echo(f"❌ {e}", err=True)
+        sys.exit(1)
+
+    data = DependencyAnalyzer(collector).analyze()
+    click.echo(f"\n🔗 Dependency Analysis — {collector.repo_name()}")
+    click.echo(f"   Files with imports: {data['files_with_imports']}")
+    click.echo(f"   Total import relations: {data['total_import_relations']}")
+    click.echo(f"   {data['circular_dep_warning']}")
+
+    if data["top_coupled_modules"]:
+        click.echo(f"\n   Most-coupled modules:")
+        for m in data["top_coupled_modules"][:5]:
+            click.echo(f"   📦 {m['module']} — imported by {m['imported_by_count']} files")
+
+
+@main.command()
+@click.argument("path", default=".", type=click.Path(exists=True))
+def coverage(path: str):
+    """Estimate test coverage by matching source files to test files."""
+    try:
+        collector = GitCollector(str(Path(path).resolve()))
+    except ValueError as e:
+        click.echo(f"❌ {e}", err=True)
+        sys.exit(1)
+
+    data = TestCoverageAnalyzer(collector).analyze()
+    grade_color = "green" if data["coverage_grade"] in ("A", "B") else "yellow" if data["coverage_grade"] == "C" else "red"
+    click.echo(f"\n🧪 Test Coverage Estimate — {collector.repo_name()}")
+    click.echo(f"   Source files: {data['total_source_files']}")
+    click.echo(f"   Test files: {data['total_test_files']}")
+    cov_str = f"{data['coverage_grade']} — {data['estimated_coverage_pct']}%"
+    click.echo(f"   Estimated coverage: {click.style(cov_str, fg=grade_color)}")
+
+    if data["uncovered_hotspots_warning"]:
+        click.echo(f"   {click.style(data['uncovered_hotspots_warning'], 'red')}")
+
+
+@main.command()
+@click.argument("path", default=".", type=click.Path(exists=True))
+def duplicates(path: str):
+    """Detect duplicate code blocks across files."""
+    try:
+        collector = GitCollector(str(Path(path).resolve()))
+    except ValueError as e:
+        click.echo(f"❌ {e}", err=True)
+        sys.exit(1)
+
+    data = DuplicationAnalyzer(collector).analyze()
+    click.echo(f"\n📋 Duplication Detection — {collector.repo_name()}")
+    click.echo(f"   {data['duplication_summary']}")
+
+    if data["top_duplicate_pairs"]:
+        click.echo(f"\n   Top duplicate file pairs:")
+        for d in data["top_duplicate_pairs"][:8]:
+            click.echo(f"   📋 {d['file_a']} ↔ {d['file_b']} ({d['shared_lines']} lines)")
 
 
 if __name__ == "__main__":

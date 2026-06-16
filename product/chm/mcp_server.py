@@ -24,6 +24,7 @@ from mcp.server.fastmcp import FastMCP
 from chm.git_collector import GitCollector
 from chm.analyzers import (
     HotspotAnalyzer, AuthorAnalyzer, PulseAnalyzer, ComplexityAnalyzer,
+    DeadCodeAnalyzer, DependencyAnalyzer, TestCoverageAnalyzer, DuplicationAnalyzer,
 )
 from chm.analyzers.trends import TrendTracker
 from chm.reporters import TerminalReporter
@@ -61,6 +62,10 @@ def analyze_repo(repo_path: str = ".") -> dict:
         "authors": AuthorAnalyzer(collector).analyze(),
         "pulse": PulseAnalyzer(collector).analyze(),
         "complexity": ComplexityAnalyzer(collector).analyze(),
+        "dead_code": DeadCodeAnalyzer(collector).analyze(),
+        "dependencies": DependencyAnalyzer(collector).analyze(),
+        "test_coverage": TestCoverageAnalyzer(collector).analyze(),
+        "duplication": DuplicationAnalyzer(collector).analyze(),
     }
 
     # Add health score
@@ -154,6 +159,71 @@ def get_complexity(repo_path: str = ".") -> dict:
         "avg_complexity": data["avg_complexity"],
         "risky_files": data["risky_files"],
         "risk_summary": f"{len(data['risky_files'])} files with high complexity and low comment ratio",
+    }
+
+
+@mcp.tool()
+def get_dead_code(repo_path: str = ".") -> dict:
+    """Find files that haven't been modified recently — potential dead code.
+
+    Identifies stale files and files that never appear in recent git history.
+    """
+    collector = _get_collector(repo_path)
+    data = DeadCodeAnalyzer(collector).analyze()
+    return {
+        "repo": collector.repo_name(),
+        "total_stale": data["total_stale"],
+        "very_stale_count": len(data["very_stale_files"]),
+        "never_touched": data["total_never_touched"],
+        "staleness_ratio": data["staleness_ratio"],
+        "very_stale_files": data["very_stale_files"][:10],
+    }
+
+
+@mcp.tool()
+def get_dependencies(repo_path: str = ".") -> dict:
+    """Analyze import patterns, coupling, and circular dependencies."""
+    collector = _get_collector(repo_path)
+    data = DependencyAnalyzer(collector).analyze()
+    return {
+        "repo": collector.repo_name(),
+        "total_import_relations": data["total_import_relations"],
+        "most_coupled": data["top_coupled_modules"][:10],
+        "circular_deps": data["potential_circular_deps"],
+        "warning": data["circular_dep_warning"],
+    }
+
+
+@mcp.tool()
+def get_test_coverage(repo_path: str = ".") -> dict:
+    """Estimate test coverage by matching source files to test files.
+
+    Uses naming conventions (test_*.py, *.test.js, etc.) — not actual coverage data.
+    """
+    collector = _get_collector(repo_path)
+    data = TestCoverageAnalyzer(collector).analyze()
+    return {
+        "repo": collector.repo_name(),
+        "coverage_grade": data["coverage_grade"],
+        "coverage_pct": data["estimated_coverage_pct"],
+        "total_source_files": data["total_source_files"],
+        "covered_files": data["covered_files"],
+        "uncovered_files": data["uncovered_files"],
+        "high_risk_uncovered": data["high_risk_uncovered"][:10],
+        "warning": data["uncovered_hotspots_warning"],
+    }
+
+
+@mcp.tool()
+def get_duplication(repo_path: str = ".") -> dict:
+    """Detect code duplication between files."""
+    collector = _get_collector(repo_path)
+    data = DuplicationAnalyzer(collector).analyze()
+    return {
+        "repo": collector.repo_name(),
+        "summary": data["duplication_summary"],
+        "top_duplicate_pairs": data["top_duplicate_pairs"][:15],
+        "total_duplicate_lines": data["total_duplicate_lines"],
     }
 
 
