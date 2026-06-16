@@ -1,0 +1,46 @@
+# Lighthouse Analytics — Full Stack Deployment
+#
+# Start:
+#   docker-compose up -d
+#
+# Stop:
+#   docker-compose down
+
+version: "3.8"
+
+services:
+  saas:
+    build: .
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./saas/data:/app/saas/data
+      - ./ops/data:/app/ops/data
+    environment:
+      - PORT=5001
+      - HOST=0.0.0.0
+      - FLASK_DEBUG=0
+      - SECRET_KEY=${SECRET_KEY:-}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - WECHAT_APP_ID=${WECHAT_APP_ID:-}
+      - ALIPAY_APP_ID=${ALIPAY_APP_ID:-}
+      - PAYPAL_CLIENT_ID=${PAYPAL_CLIENT_ID:-}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  # Optional: nginx reverse proxy for SSL termination
+  # nginx:
+  #   image: nginx:alpine
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf
+  #     - ./ssl:/etc/nginx/ssl
+  #   depends_on:
+  #     - saas
