@@ -142,6 +142,12 @@ def settings_page():
     return _render_page("settings.html", title="设置 — Lighthouse Analytics", user=g.user)
 
 
+@app.route("/repos")
+@login_required
+def repos_page():
+    return _render_page("repos.html", title="仓库仪表盘 — Lighthouse Analytics", user=g.user)
+
+
 @app.route("/admin")
 @login_required
 def admin_page():
@@ -509,6 +515,69 @@ def server_error(e):
     if request.is_json or request.headers.get("Accept") == "application/json":
         return jsonify({"error": "Internal server error"}), 500
     return _render_page("error.html", title="500 — Lighthouse Analytics", code=500, message="服务器错误"), 500
+
+
+# ── Multi-Repo Dashboard ───────────────────────────────────────
+
+# In-memory per-user repo data
+_user_repos: dict[str, list[dict]] = {}
+
+
+@app.route("/api/repos", methods=["GET"])
+@login_required
+def api_list_repos():
+    """List user's tracked repositories."""
+    repos = _user_repos.get(g.user["id"], [])
+    return jsonify({"repos": repos})
+
+
+@app.route("/api/repos", methods=["POST"])
+@login_required
+def api_add_repo():
+    """Add a repo to the user's dashboard."""
+    data = request.get_json() or {}
+    repo_data = {
+        "name": data.get("name", "unknown"),
+        "path": data.get("path", ""),
+        "health_score": data.get("health_score"),
+        "total_commits": data.get("total_commits"),
+        "total_files": data.get("total_files"),
+        "bus_factor": data.get("bus_factor"),
+        "last_analysis": datetime.now().isoformat(),
+        "hotspots_count": data.get("hotspots_count", 0),
+    }
+
+    if g.user["id"] not in _user_repos:
+        _user_repos[g.user["id"]] = []
+
+    # Update existing or append
+    existing = [r for r in _user_repos[g.user["id"]] if r["name"] == repo_data["name"]]
+    if existing:
+        existing[0].update(repo_data)
+    else:
+        _user_repos[g.user["id"]].append(repo_data)
+
+    return jsonify({"success": True, "repo": repo_data}), 201
+
+
+@app.route("/api/repos/compare")
+@login_required
+def api_compare_repos():
+    """Compare health across all tracked repos."""
+    repos = _user_repos.get(g.user["id"], [])
+    if not repos:
+        return jsonify({"repos": [], "summary": "No repos tracked yet"})
+
+    scores = [r.get("health_score") or 0 for r in repos]
+    avg_score = round(sum(scores) / len(scores), 1) if scores else 0
+
+    return jsonify({
+        "repos": repos,
+        "count": len(repos),
+        "avg_health_score": avg_score,
+        "healthiest": max(repos, key=lambda r: r.get("health_score") or 0) if repos else None,
+        "riskiest": min(repos, key=lambda r: r.get("health_score") or 100) if repos else None,
+    })
 
 
 # ── Report Sharing ─────────────────────────────────────────────

@@ -13,6 +13,10 @@ from chm.analyzers import (
     AuthorAnalyzer,
     PulseAnalyzer,
     ComplexityAnalyzer,
+    DeadCodeAnalyzer,
+    DependencyAnalyzer,
+    TestCoverageAnalyzer,
+    DuplicationAnalyzer,
 )
 from chm.reporters import TerminalReporter, HTMLReporter, JSONReporter
 from chm.analyzers.trends import TrendTracker
@@ -65,6 +69,18 @@ def analyze(path: str, report: str, output: str, max_commits: int):
     click.echo("  ├─ Analyzing complexity...")
     complexity = ComplexityAnalyzer(collector).analyze()
 
+    click.echo("  ├─ Detecting dead code...")
+    dead_code = DeadCodeAnalyzer(collector).analyze()
+
+    click.echo("  ├─ Analyzing dependencies...")
+    dependencies = DependencyAnalyzer(collector).analyze()
+
+    click.echo("  ├─ Estimating test coverage...")
+    test_coverage = TestCoverageAnalyzer(collector).analyze()
+
+    click.echo("  ├─ Detecting duplication...")
+    duplication = DuplicationAnalyzer(collector).analyze()
+
     elapsed = time.time() - start_time
 
     # Assemble results
@@ -77,6 +93,10 @@ def analyze(path: str, report: str, output: str, max_commits: int):
         "authors": authors,
         "pulse": pulse,
         "complexity": complexity,
+        "dead_code": dead_code,
+        "dependencies": dependencies,
+        "test_coverage": test_coverage,
+        "duplication": duplication,
         "analysis_time_seconds": round(elapsed, 2),
     }
 
@@ -314,6 +334,280 @@ def status(path: str):
         click.echo(f"   Snapshots: {len(history)}")
     except ValueError:
         click.echo(f"\n   {path} is not a git repository")
+
+
+@main.command()
+@click.option("--http", type=int, default=None, help="HTTP port (default: stdio)")
+@click.option("--host", default="127.0.0.1", help="HTTP host")
+def mcp(http: int, host: str):
+    """Start CHM as an MCP (Model Context Protocol) server.
+
+    Exposes 8 tools and 1 resource for AI agents to query codebase health.
+    Use stdio transport by default, or --http for HTTP transport.
+
+    \b
+    Examples:
+      chm mcp                  # stdio (for Claude Desktop)
+      chm mcp --http 8080      # HTTP (for network access)
+      claude mcp add chm -- chm mcp
+    """
+    from chm.mcp_server import main as mcp_main
+    import sys
+    # Simulate: python -m chm.mcp_server --http PORT
+    sys.argv = ["chm-mcp"]
+    if http:
+        sys.argv.extend(["--http", str(http), "--host", host])
+    mcp_main()
+
+
+@main.command()
+@click.argument("path", default=".", type=click.Path(exists=True))
+def deadcode(path: str):
+    """Detect files that haven't been modified recently (potential dead code)."""
+    try:
+        collector = GitCollector(str(Path(path).resolve()))
+    except ValueError as e:
+        click.echo(f"❌ {e}", err=True)
+        sys.exit(1)
+
+    data = DeadCodeAnalyzer(collector).analyze()
+    click.echo(f"\n💀 Dead Code Analysis — {collector.repo_name()}")
+    click.echo(f"   Stale files: {data['total_stale']}")
+    click.echo(f"   Never touched: {data['total_never_touched']}")
+    click.echo(f"   Staleness ratio: {data['staleness_ratio']:.1%}")
+
+    if data["very_stale_files"]:
+        click.echo(f"\n   {click.style('Very Stale (1+ year):', 'red')}")
+        for f in data["very_stale_files"][:10]:
+            click.echo(f"   💀 {f['file']} ({f['months_stale']} months)")
+
+
+@main.command()
+@click.argument("path", default=".", type=click.Path(exists=True))
+def deps(path: str):
+    """Analyze dependencies and coupling between files."""
+    try:
+        collector = GitCollector(str(Path(path).resolve()))
+    except ValueError as e:
+        click.echo(f"❌ {e}", err=True)
+        sys.exit(1)
+
+    data = DependencyAnalyzer(collector).analyze()
+    click.echo(f"\n🔗 Dependency Analysis — {collector.repo_name()}")
+    click.echo(f"   Files with imports: {data['files_with_imports']}")
+    click.echo(f"   Total import relations: {data['total_import_relations']}")
+    click.echo(f"   {data['circular_dep_warning']}")
+
+    if data["top_coupled_modules"]:
+        click.echo(f"\n   Most-coupled modules:")
+        for m in data["top_coupled_modules"][:5]:
+            click.echo(f"   📦 {m['module']} — imported by {m['imported_by_count']} files")
+
+
+@main.command()
+@click.argument("path", default=".", type=click.Path(exists=True))
+def coverage(path: str):
+    """Estimate test coverage by matching source files to test files."""
+    try:
+        collector = GitCollector(str(Path(path).resolve()))
+    except ValueError as e:
+        click.echo(f"❌ {e}", err=True)
+        sys.exit(1)
+
+    data = TestCoverageAnalyzer(collector).analyze()
+    grade_color = "green" if data["coverage_grade"] in ("A", "B") else "yellow" if data["coverage_grade"] == "C" else "red"
+    click.echo(f"\n🧪 Test Coverage Estimate — {collector.repo_name()}")
+    click.echo(f"   Source files: {data['total_source_files']}")
+    click.echo(f"   Test files: {data['total_test_files']}")
+    cov_str = f"{data['coverage_grade']} — {data['estimated_coverage_pct']}%"
+    click.echo(f"   Estimated coverage: {click.style(cov_str, fg=grade_color)}")
+
+    if data["uncovered_hotspots_warning"]:
+        click.echo(f"   {click.style(data['uncovered_hotspots_warning'], 'red')}")
+
+
+@main.command()
+@click.argument("path", default=".", type=click.Path(exists=True))
+def duplicates(path: str):
+    """Detect duplicate code blocks across files."""
+    try:
+        collector = GitCollector(str(Path(path).resolve()))
+    except ValueError as e:
+        click.echo(f"❌ {e}", err=True)
+        sys.exit(1)
+
+    data = DuplicationAnalyzer(collector).analyze()
+    click.echo(f"\n📋 Duplication Detection — {collector.repo_name()}")
+    click.echo(f"   {data['duplication_summary']}")
+
+    if data["top_duplicate_pairs"]:
+        click.echo(f"\n   Top duplicate file pairs:")
+        for d in data["top_duplicate_pairs"][:8]:
+            click.echo(f"   📋 {d['file_a']} ↔ {d['file_b']} ({d['shared_lines']} lines)")
+
+
+@main.command()
+@click.argument("path", default=".", type=click.Path(exists=True))
+def init(path: str):
+    """Initialize CHM for a project — guided onboarding wizard.
+
+    Takes a first snapshot, sets up config, and shows next steps.
+    """
+    repo_path = Path(path).resolve()
+
+    try:
+        collector = GitCollector(str(repo_path))
+    except ValueError as e:
+        click.echo(f"❌ {e}", err=True)
+        sys.exit(1)
+
+    # Fancy header
+    click.echo(f"""
+{click.style('╔══════════════════════════════════════════╗', fg='blue')}
+{click.style('║', fg='blue')}  {click.style('🏠 Welcome to Lighthouse Analytics!', bold=True)}  {click.style('║', fg='blue')}
+{click.style('╚══════════════════════════════════════════╝', fg='blue')}
+""")
+
+    click.echo(f"  Repository: {click.style(collector.repo_name(), fg='cyan')}")
+    click.echo(f"  Path: {repo_path}")
+    click.echo(f"  Total commits: {collector.total_commits()}")
+    click.echo(f"  Total files: {collector.total_files()}")
+    click.echo()
+
+    # Step 1: First snapshot
+    click.echo(f"  {click.style('📸 Step 1: Taking baseline snapshot...', fg='yellow')}")
+    from chm.analyzers.trends import TrendTracker
+    tracker = TrendTracker(str(repo_path))
+    snap = tracker.snapshot(collector)
+    click.echo(f"  ✅ Baseline saved ({snap['timestamp'][:19]})")
+
+    # Step 2: Quick analysis
+    click.echo(f"\n  {click.style('🔍 Step 2: Quick health scan...', fg='yellow')}")
+    hotspots = HotspotAnalyzer(collector).analyze()
+    authors = AuthorAnalyzer(collector).analyze()
+    pulse = PulseAnalyzer(collector).analyze()
+    complexity = ComplexityAnalyzer(collector).analyze()
+    dead_code = DeadCodeAnalyzer(collector).analyze()
+    test_coverage = TestCoverageAnalyzer(collector).analyze()
+
+    # Quick summary
+    bf = authors.get("bus_factor", "?")
+    bf_warn = "⚠️" if (isinstance(bf, int) and bf <= 2) else "✅"
+    score = TerminalReporter()._calculate_health_score({
+        "hotspots": hotspots, "authors": authors, "pulse": pulse,
+        "complexity": complexity, "dead_code": dead_code,
+        "test_coverage": test_coverage, "dependencies": {}, "duplication": {},
+    })
+
+    click.echo(f"  {bf_warn} Bus Factor: {bf}")
+    click.echo(f"  🔥 Hotspots: {len(hotspots['top_hotspots'])} files")
+    click.echo(f"  🧪 Test Coverage: {test_coverage.get('coverage_grade', '?')} ({test_coverage.get('estimated_coverage_pct', 0)}%)")
+    click.echo(f"  🧬 Health Score: {score}/100")
+
+    # Step 3: What's next
+    click.echo(f"""
+{click.style('  ── Next Steps ──', bold=True)}
+  {click.style('1.', fg='green')} Review your report:  {click.style('chm analyze .', fg='cyan')}
+  {click.style('2.', fg='green')} Generate HTML:      {click.style('chm analyze . --report html -o report.html', fg='cyan')}
+  {click.style('3.', fg='green')} Track trends:       {click.style('chm snapshot .', fg='cyan')} (run weekly)
+  {click.style('4.', fg='green')} Compare snapshots:  {click.style('chm compare .', fg='cyan')}
+  {click.style('5.', fg='green')} Share with team:    {click.style('open report.html', fg='cyan')}
+
+  Run {click.style('chm --help', bold=True)} to see all 14 commands.
+""")
+
+    # Step 4: SaaS mention
+    click.echo(f"  {click.style('💡 Pro tip:', fg='yellow')} Get HTML reports + team dashboards at")
+    click.echo(f"     {click.style('http://localhost:5001', fg='cyan')} (SaaS running locally)")
+
+    click.echo(f"\n{click.style('  🎉 Ready! Lighthouse is watching your codebase.', fg='green')}\n")
+
+
+@main.command()
+@click.argument("path", default=".", type=click.Path(exists=True))
+@click.option("--install/--uninstall", default=True, help="Install or uninstall the git hook")
+def watch(path: str, install: bool):
+    """Auto-monitor: install a git post-commit hook to run analysis on every commit.
+
+    \b
+    Examples:
+      chm watch .             # Install hook
+      chm watch . --uninstall # Remove hook
+    """
+    repo_path = Path(path).resolve()
+    hooks_dir = repo_path / ".git" / "hooks"
+    hook_path = hooks_dir / "post-commit"
+
+    if not hooks_dir.exists():
+        click.echo("❌ Not a git repository", err=True)
+        sys.exit(1)
+
+    if not install:
+        if hook_path.exists():
+            hook_path.unlink()
+            click.echo("🗑️  Git hook removed. CHM will no longer auto-analyze commits.")
+        else:
+            click.echo("No hook installed.")
+        return
+
+    # Create the hook
+    chm_path = sys.argv[0] if sys.argv[0].endswith("chm") else "chm"
+    hook_script = f"""#!/bin/bash
+# CHM auto-analysis hook — installed by 'chm watch'
+# Runs a quick health snapshot after each commit.
+
+CHM="{chm_path}"
+REPO="{repo_path}"
+
+# Quick analysis (silent, logs to .chm/)
+mkdir -p "$REPO/.chm/"
+$CHM snapshot "$REPO" --max-commits 100 >> "$REPO/.chm/watch.log" 2>&1
+echo "  🏠 CHM snapshot saved" >> "$REPO/.chm/watch.log"
+"""
+
+    hook_path.write_text(hook_script)
+    hook_path.chmod(0o755)
+
+    click.echo(f"✅ Git post-commit hook installed!")
+    click.echo(f"   Hook: {hook_path}")
+    click.echo(f"   CHM will snapshot after each commit.")
+    click.echo(f"   Logs: {repo_path}/.chm/watch.log")
+    click.echo(f"")
+    click.echo(f"   To uninstall: {click.style('chm watch . --uninstall', fg='yellow')}")
+
+
+@main.command()
+@click.argument("path", default=".", type=click.Path(exists=True))
+@click.option("--output", "-o", type=click.Path(), help="Save badge to file")
+@click.option("--shields", is_flag=True, help="Generate shields.io URL instead of SVG")
+def badge(path: str, output: str, shields: bool):
+    """Generate a code health badge (SVG) for README.
+
+    \b
+    Examples:
+      chm badge .                    # Print SVG badge
+      chm badge . -o badge.svg       # Save to file
+      chm badge . --shields          # Print shields.io URL
+    """
+    from chm.badge import generate_badge, generate_shields_url
+
+    repo_path = Path(path).resolve()
+    try:
+        GitCollector(str(repo_path))
+    except ValueError as e:
+        click.echo(f"❌ {e}", err=True)
+        sys.exit(1)
+
+    if shields:
+        url = generate_shields_url(str(repo_path))
+        click.echo(url)
+    else:
+        svg = generate_badge(str(repo_path))
+        if output:
+            Path(output).write_text(svg)
+            click.echo(f"✅ Badge saved to {output}")
+        else:
+            click.echo(svg)
 
 
 if __name__ == "__main__":

@@ -48,6 +48,10 @@ class TerminalReporter:
         self.render_authors(results.get("authors", {}))
         self.render_pulse(results.get("pulse", {}))
         self.render_complexity(results.get("complexity", {}))
+        self.render_dead_code(results.get("dead_code", {}))
+        self.render_dependencies(results.get("dependencies", {}))
+        self.render_test_coverage(results.get("test_coverage", {}))
+        self.render_duplication(results.get("duplication", {}))
 
         # Overall health score
         score = self._calculate_health_score(results)
@@ -152,6 +156,55 @@ class TerminalReporter:
                     f"[复杂度:{f['complexity_score']} 注释率:{f['comment_ratio']}]"
                 )
 
+    def render_dead_code(self, data: dict):
+        """Render dead code analysis."""
+        if not data or data.get("total_stale", 0) == 0:
+            return
+        self._header("💀 死代码检测 (Dead Code Detection)")
+        very_stale = data.get("very_stale_files", [])
+        stale = data.get("stale_files", [])
+        print(f"  长期未修改文件: {data['total_stale']}  |  从未出现: {data['total_never_touched']}")
+        if very_stale:
+            print(f"  {self._c('一年以上未修改:', 'red')}")
+            for f in very_stale[:5]:
+                print(f"    💀 {f['file'][:55]} ({f['months_stale']}个月)")
+
+    def render_dependencies(self, data: dict):
+        """Render dependency analysis."""
+        if not data or not data.get("total_import_relations"):
+            return
+        self._header("🔗 依赖分析 (Dependencies)")
+        print(f"  导入关系: {data['total_import_relations']}  |  有导入的文件: {data['files_with_imports']}")
+        circular = data.get("potential_circular_deps", [])
+        if circular:
+            print(f"  {self._c(f'⚠️ 发现 {len(circular)} 个潜在循环依赖', 'yellow')}")
+            for cd in circular[:3]:
+                print(f"    ↻ {cd['file_a'][:30]} ↔ {cd['file_b'][:30]}")
+
+    def render_test_coverage(self, data: dict):
+        """Render test coverage estimate."""
+        if not data or not data.get("total_source_files"):
+            return
+        self._header("🧪 测试覆盖估算 (Test Coverage)")
+        grade = data.get("coverage_grade", "?")
+        grade_color = "green" if grade in ("A", "B") else "yellow" if grade == "C" else "red"
+        cov_str = f"{grade} — {data['estimated_coverage_pct']}%"
+        print(f"  覆盖率估算: {self._c(cov_str, grade_color)}")
+        print(f"  源文件: {data['total_source_files']}  |  测试文件: {data['total_test_files']}")
+        print(f"  有测试覆盖: {data['covered_files']}  |  无测试: {data['uncovered_files']}")
+        warning = data.get("uncovered_hotspots_warning")
+        if warning:
+            print(f"  {self._c(warning, 'red')}")
+
+    def render_duplication(self, data: dict):
+        """Render duplication detection."""
+        if not data or not data.get("top_duplicate_pairs"):
+            return
+        self._header("📋 重复代码检测 (Duplication)")
+        print(f"  {data.get('duplication_summary', '')}")
+        for d in data.get("top_duplicate_pairs", [])[:5]:
+            print(f"    📋 {d['file_a'][:35]} ↔ {d['file_b'][:35]} ({d['shared_lines']} 行)")
+
     def _calculate_health_score(self, results: dict) -> int:
         """Calculate overall health score (0-100)."""
         score = 50  # baseline
@@ -204,6 +257,44 @@ class TerminalReporter:
             if avg_complexity > 20:
                 score -= 10
                 reasons.append("整体复杂度过高")
+
+        # Dead code: staleness penalty
+        dead_code = results.get("dead_code", {})
+        if dead_code:
+            staleness = dead_code.get("staleness_ratio", 0)
+            if staleness > 0.3:
+                score -= 10
+                reasons.append("死代码比例过高")
+            elif staleness > 0.15:
+                score -= 5
+
+        # Dependencies: circular dep penalty
+        deps = results.get("dependencies", {})
+        if deps:
+            circular = len(deps.get("potential_circular_deps", []))
+            if circular > 5:
+                score -= 10
+                reasons.append("循环依赖过多")
+            elif circular > 0:
+                score -= 5
+
+        # Test coverage: bonus for coverage, penalty for none
+        coverage = results.get("test_coverage", {})
+        if coverage:
+            cov_pct = coverage.get("estimated_coverage_pct", 0)
+            if cov_pct >= 70:
+                score += 5
+            elif cov_pct < 20 and coverage.get("total_source_files", 0) > 10:
+                score -= 10
+                reasons.append("测试覆盖率极低")
+
+        # Duplication: penalty
+        duplication = results.get("duplication", {})
+        if duplication:
+            dup_pairs = len(duplication.get("top_duplicate_pairs", []))
+            if dup_pairs > 10:
+                score -= 5
+                reasons.append("重复代码过多")
 
         # Clamp
         return max(0, min(100, score))

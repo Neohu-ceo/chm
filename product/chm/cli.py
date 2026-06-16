@@ -576,5 +576,39 @@ echo "  🏠 CHM snapshot saved" >> "$REPO/.chm/watch.log"
     click.echo(f"   To uninstall: {click.style('chm watch . --uninstall', fg='yellow')}")
 
 
+@main.command()
+@click.argument("path", default=".", type=click.Path(exists=True))
+@click.option("--output", "-o", type=click.Path(), help="Save badge to file")
+@click.option("--shields", is_flag=True, help="Generate shields.io URL instead of SVG")
+def badge(path: str, output: str, shields: bool):
+    """Generate a code health badge (SVG) for README.
+
+    \b
+    Examples:
+      chm badge .                    # Print SVG badge
+      chm badge . -o badge.svg       # Save to file
+      chm badge . --shields          # Print shields.io URL
+    """
+    from chm.badge import generate_badge, generate_shields_url
+
+    repo_path = Path(path).resolve()
+    try:
+        GitCollector(str(repo_path))
+    except ValueError as e:
+        click.echo(f"❌ {e}", err=True)
+        sys.exit(1)
+
+    if shields:
+        url = generate_shields_url(str(repo_path))
+        click.echo(url)
+    else:
+        svg = generate_badge(str(repo_path))
+        if output:
+            Path(output).write_text(svg)
+            click.echo(f"✅ Badge saved to {output}")
+        else:
+            click.echo(svg)
+
+
 if __name__ == "__main__":
     main()

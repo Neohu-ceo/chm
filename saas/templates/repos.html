@@ -1,0 +1,89 @@
+{% include "base_styles.html" %}
+<div class="nav">
+    <a href="/dashboard" class="nav-brand">🏠 Lighthouse</a>
+    <div class="nav-links">
+        <a href="/dashboard">控制台</a>
+        <a href="/repos">仓库</a>
+        <a href="/pricing">升级</a>
+        <a href="/settings">设置</a>
+    </div>
+</div>
+
+<div class="container">
+    <h2 style="margin-bottom:.25rem;">📊 仓库仪表盘</h2>
+    <p style="color:var(--text-muted);margin-bottom:2rem;">跨仓库健康度对比</p>
+
+    <!-- Summary -->
+    <div class="card" id="summary-card" style="display:none;">
+        <div style="display:flex;gap:2rem;flex-wrap:wrap;align-items:center;">
+            <div style="text-align:center;">
+                <div style="font-size:1rem;color:var(--text-muted);">平均健康度</div>
+                <div class="metric-value" id="avg-score" style="font-size:2rem;">—</div>
+            </div>
+            <div style="text-align:center;">
+                <div style="font-size:.8rem;color:var(--text-muted);">仓库数</div>
+                <div class="metric-value" id="repo-count" style="font-size:2rem;">—</div>
+            </div>
+            <div style="flex:1;">
+                <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:.5rem;">最健康</div>
+                <div id="healthiest" style="font-weight:600;">—</div>
+                <div style="font-size:.8rem;color:var(--text-muted);margin:.5rem 0;">最需关注</div>
+                <div id="riskiest" style="font-weight:600;color:var(--red);">—</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Repo list -->
+    <div class="card">
+        <h3>📁 追踪中的仓库</h3>
+        <div id="repo-list" style="font-size:.9rem;color:var(--text-muted);">
+            <p>还没有添加仓库。在终端运行以下命令来添加：</p>
+            <pre style="background:#1e293b;color:#e2e8f0;padding:.75rem;border-radius:8px;font-size:.8rem;">
+curl -X POST http://localhost:5001/api/repos \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -d '{"name":"my-project","health_score":78,"total_commits":1234,"bus_factor":3}'
+            </pre>
+        </div>
+    </div>
+</div>
+
+<script>
+async function load() {
+    const res = await fetch('/api/repos/compare');
+    const data = await res.json();
+
+    if (data.repos.length === 0) return;
+
+    document.getElementById('summary-card').style.display = 'block';
+    document.getElementById('avg-score').textContent = data.avg_health_score;
+    document.getElementById('repo-count').textContent = data.count;
+
+    if (data.healthiest) {
+        document.getElementById('healthiest').innerHTML =
+            `${data.healthiest.name} <span class="badge badge-green">${data.healthiest.health_score}/100</span>`;
+    }
+    if (data.riskiest) {
+        const rc = data.riskiest.health_score >= 60 ? 'badge-green' : data.riskiest.health_score >= 40 ? 'badge-yellow' : 'badge-red';
+        document.getElementById('riskiest').innerHTML =
+            `${data.riskiest.name} <span class="badge ${rc}">${data.riskiest.health_score}/100</span>`;
+    }
+
+    // Repo list
+    document.getElementById('repo-list').innerHTML = data.repos.map(r => {
+        const color = r.health_score >= 70 ? 'var(--green)' : r.health_score >= 40 ? 'var(--yellow)' : 'var(--red)';
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--border);">
+            <div>
+                <strong>${r.name}</strong>
+                <br><small style="color:var(--text-muted);">${r.total_commits || 0} commits · ${r.total_files || 0} files · BF: ${r.bus_factor || '?'}</small>
+            </div>
+            <div style="text-align:right;">
+                <span style="font-size:1.2rem;font-weight:700;color:${color};">${r.health_score || '?'}</span>
+                <br><small style="color:var(--text-muted);">${r.last_analysis?.slice(0,10) || ''}</small>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+load();
+</script>
