@@ -6,7 +6,7 @@ with open("README.md") as f:
     long_description = f.read()
 
 setup(
-    name="chm",
+    name="chm-cli",
     version="0.2.0",
     description="Illuminate the dark corners of your codebase — one command to know your codebase health",
     long_description=long_description,
