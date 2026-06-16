@@ -764,5 +764,47 @@ def notify(path: str, slack: str, discord: str, webhook: str):
         click.echo("Please specify --slack, --discord, or --webhook URL")
 
 
+@main.command()
+def upgrade():
+    """Check for updates and upgrade to the latest version."""
+    from chm.upgrade import check_for_update, perform_upgrade
+
+    click.echo("🔍 Checking for updates...")
+    check = check_for_update()
+    click.echo(f"   {check['message']}")
+
+    if check["update_available"]:
+        if click.confirm("Upgrade now?"):
+            result = perform_upgrade()
+            click.echo(f"   {result['message']}")
+            if result["success"] and not result.get("already_latest"):
+                click.echo("   Please restart your terminal.")
+        else:
+            click.echo(f"   Run '{click.style('chm upgrade', bold=True)}' anytime to upgrade.")
+
+
+@main.command()
+@click.argument("path", default=".", type=click.Path(exists=True))
+@click.option("--output", "-o", type=click.Path(), help="Save to file")
+def export(path: str, output: str):
+    """Export analysis results as CSV for spreadsheet analysis."""
+    from chm.export import export_csv
+
+    repo_path = str(Path(path).resolve())
+    try:
+        GitCollector(repo_path)
+    except ValueError as e:
+        click.echo(f"❌ {e}", err=True)
+        sys.exit(1)
+
+    csv_data = export_csv(repo_path)
+
+    if output:
+        Path(output).write_text(csv_data)
+        click.echo(f"✅ CSV exported to {output}")
+    else:
+        click.echo(csv_data)
+
+
 if __name__ == "__main__":
     main()
