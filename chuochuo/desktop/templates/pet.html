@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>戳戳 — Desktop Pet</title>
+<style>
+:root {
+  --bg: #1a1a1a; --text: #e0d8d0; --muted: #888;
+  --accent: #ff6b35; --pink: #e8879a; --blue: #5b9bd5;
+  --green: #6baf6b; --yellow: #f0c040;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'PingFang SC',-apple-system,sans-serif;
+  background: var(--bg); color: var(--text);
+  display: flex; flex-direction: column; align-items: center;
+  min-height: 100vh; user-select: none;
+  -webkit-user-select: none; cursor: default;
+  overflow: hidden;
+}
+
+/* Pet area */
+.pet-container {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 1rem; width: 100%;
+}
+
+/* The pixel pet — 16×16 grid */
+.pet {
+  display: grid;
+  grid-template-columns: repeat(16, 1fr);
+  grid-template-rows: repeat(16, 1fr);
+  width: min(280px, 70vw);
+  height: min(280px, 70vw);
+  gap: 2px;
+  transition: transform 0.1s;
+  cursor: pointer;
+}
+
+.pet:active { transform: scale(0.9); }
+
+.pet.bouncing { animation: bounce 0.4s ease; }
+.pet.spinning { animation: spin 0.5s ease; }
+.pet.shaking  { animation: shake 0.3s ease; }
+
+@keyframes bounce {
+  0%,100% { transform: translateY(0); }
+  40% { transform: translateY(-20px); }
+  60% { transform: translateY(-5px); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(10deg) scale(1.1); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* Pixel block */
+.px {
+  border-radius: 3px;
+  transition: background 0.3s, transform 0.2s;
+}
+
+/* Info bar */
+.info-bar {
+  text-align: center; padding: 0.5rem;
+}
+
+.pet-name {
+  font-size: 1.3rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+}
+
+.level-badge {
+  background: var(--accent); color: #fff;
+  font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 10px;
+}
+
+/* XP bar */
+.xp-bar-wrap {
+  width: 200px; height: 4px; background: #333; border-radius: 2px;
+  margin: 0.5rem auto;
+}
+.xp-bar-fill {
+  height: 100%; background: var(--accent); border-radius: 2px;
+  transition: width 0.5s;
+}
+
+/* Stats row */
+.stats-row {
+  display: flex; gap: 1.5rem; justify-content: center;
+  font-size: 0.8rem; color: var(--muted); margin-top: 0.25rem;
+}
+.stats-row span { color: var(--accent); font-weight: 600; }
+
+/* Message bubble */
+.bubble {
+  position: fixed; top: 15%; left: 50%; transform: translateX(-50%);
+  background: #333; color: var(--text); padding: 0.5rem 1rem;
+  border-radius: 16px; font-size: 0.9rem; z-index: 10;
+  animation: floatUp 2s ease forwards; pointer-events: none;
+  white-space: nowrap;
+}
+
+@keyframes floatUp {
+  0% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-60px); }
+}
+
+/* Bottom bar */
+.bottom-bar {
+  width: 100%; padding: 0.75rem; border-top: 1px solid #222;
+  display: flex; justify-content: center; gap: 1rem;
+}
+
+.btn {
+  padding: 0.5rem 1.25rem; border-radius: 20px; border: none;
+  font-size: 0.85rem; cursor: pointer; transition: all 0.15s;
+  background: #252525; color: var(--text); border: 1px solid #333;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn:active { transform: scale(0.95); }
+.btn.accent { background: var(--accent); color: #fff; border: none; }
+
+/* Streak fire */
+.fire { animation: flicker 0.5s ease-in-out infinite alternate; }
+@keyframes flicker {
+  from { opacity: 0.7; transform: scale(1); }
+  to { opacity: 1; transform: scale(1.1); }
+}
+
+/* Emotion transition */
+.emotion-transition { transition: all 0.5s ease; }
+</style>
+</head>
+<body>
+
+<div class="pet-container" id="pet-container">
+  <!-- The pixel pet -->
+  <div class="pet" id="pet" onclick="poke()"></div>
+
+  <!-- Info -->
+  <div class="info-bar" style="margin-top:1rem;">
+    <div class="pet-name">
+      <span id="pet-name">戳戳</span>
+      <span class="level-badge" id="level-badge">Lv.1</span>
+      <span id="streak-fire" style="display:none;" class="fire">🔥</span>
+    </div>
+    <div class="xp-bar-wrap"><div class="xp-bar-fill" id="xp-bar" style="width:0%"></div></div>
+    <div class="stats-row">
+      <div>今日 <span id="today-pokes">0</span> 戳</div>
+      <div>总计 <span id="total-pokes">0</span> 戳</div>
+      <div id="streak-display"></div>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-bar">
+  <button class="btn" onclick="renamePet()">✏️ 改名</button>
+  <button class="btn accent" onclick="poke()">🖐️ 戳一下</button>
+  <button class="btn" onclick="toggleInfo()">📊 详情</button>
+</div>
+
+<script>
+const API = 'http://localhost:5200';
+
+// ── Emotion Pixel Maps (16×16) ────────────────────────────────
+
+const EMOTIONS = {
+  happy: `
+    ........########..
+    ......##......##..
+    .....##........##.
+    ....##..##..##..##
+    ...#.............#
+    ...#..##....##..#.
+    ...#....####....#.
+    ...#.............#
+    ...#..#......#..#.
+    ....#..........#..
+    .....##..##..##...
+    ......##....##....
+    .......#......#...
+    ......#........#..
+    .....##..##..##...
+    .......######.....
+  `,
+
+  sleepy: `
+    ................
+    ................
+    ....########....
+    ...##......##...
+    ..##........##..
+    ..#..........#..
+    ..#...####...#..
+    ..#..........#..
+    ..#..........#..
+    ..#..........#..
+    ...#...##...#...
+    ....#......#....
+    .....#....#.....
+    ......#..#......
+    .......##.......
+    ................
+  `,
+
+  surprised: `
+    ....########....
+    ...##......##...
+    ..##........##..
+    .##..........##.
+    .#..##....##..#.
+    .#..##....##..#.
+    .#............#.
+    .#.....####...#.
+    .#....#....#..#.
+    .#....#....#..#.
+    .##..........##.
+    ..##..####..##..
+    ...##......##...
+    ....########....
+    ................
+    ................
+  `,
+
+  love: `
+    ................
+    ..##........##..
+    .####......####.
+    .######..######.
+    .############..
+    ..##########...
+    ...########....
+    ....######.....
+    .....####......
+    ......##.......
+    ......##.......
+    ......##.......
+    ......##.......
+    .....##.##.....
+    ....##...##....
+    ...##.....##...
+  `,
+
+  excited: `
+    ....########....
+    ...##......##...
+    ..##........##..
+    .##..##..##..##.
+    .#..##....##..#.
+    .#............#.
+    .#....####....#.
+    .#...#....#...#.
+    .#..##....##..#.
+    .#..#......#..#.
+    .##..........##.
+    ..##........##..
+    ...##..##..##...
+    ....##....##....
+    .....#....#.....
+    ......####......
+  `,
+
+  hungry: `
+    .....######.....
+    ....##....##....
+    ...##......##...
+    ..##........##..
+    .##..##..##..##.
+    .#..##....##..#.
+    .#............#.
+    .#...######...#.
+    .#............#.
+    .#..##....##..#.
+    .##..........##.
+    ..##........##..
+    ...##..##..##...
+    ....##....##....
+    ....#..##..#....
+    .....##..##.....
+  `,
+};
+
+// ── Render ─────────────────────────────────────────────────────
+
+let currentEmotion = 'happy';
+let petName = '戳戳';
+let stats = {};
+
+function renderPet(emotion) {
+  currentEmotion = emotion;
+  const map = (EMOTIONS[emotion] || EMOTIONS.happy).trim().split('\n').map(l => l.trim());
+  const pet = document.getElementById('pet');
+  pet.innerHTML = '';
+
+  const colors = {
+    '#': getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#ff6b35',
+    '.': 'transparent',
+  };
+
+  for (let row = 0; row < 16; row++) {
+    for (let col = 0; col < 16; col++) {
+      const char = (map[row] || '')[col] || '.';
+      const px = document.createElement('div');
+      px.className = 'px';
+      px.style.background = char === '#' ? colors['#'] : 'transparent';
+
+      // Add subtle animation for certain pixels
+      if (char === '#' && emotion === 'excited' && Math.random() < 0.1) {
+        px.style.animation = 'flicker 0.3s ease infinite alternate';
+      }
+
+      pet.appendChild(px);
+    }
+  }
+}
+
+// ── Interactions ───────────────────────────────────────────────
+
+async function poke() {
+  const pet = document.getElementById('pet');
+  const reactions = ['bouncing', 'spinning', 'shaking'];
+  const anim = reactions[Math.floor(Math.random() * reactions.length)];
+  pet.classList.add(anim);
+  setTimeout(() => pet.classList.remove(anim), 500);
+
+  try {
+    const r = await fetch(API+'/api/poke', {method:'POST'});
+    const d = await r.json();
+    showBubble(d.message || '嘿嘿~');
+    currentEmotion = d.reaction;
+    renderPet(d.reaction);
+    await loadStats();
+    checkEvolution();
+  } catch(e) {
+    showBubble('服务器没连上~');
+  }
+}
+
+function showBubble(msg) {
+  const b = document.createElement('div');
+  b.className = 'bubble'; b.textContent = msg;
+  document.body.appendChild(b);
+  setTimeout(() => b.remove(), 2200);
+}
+
+async function loadStats() {
+  try {
+    const r = await fetch(API+'/api/stats');
+    stats = await r.json();
+    document.getElementById('pet-name').textContent = petName;
+    document.getElementById('level-badge').textContent = 'Lv.'+stats.level;
+    document.getElementById('xp-bar').style.width = (stats.xp/stats.xp_to_next*100)+'%';
+    document.getElementById('today-pokes').textContent = stats.pokes_today;
+    document.getElementById('total-pokes').textContent = stats.total_pokes;
+
+    if (stats.streak_days >= 3) {
+      const fire = document.getElementById('streak-fire');
+      fire.style.display = 'inline';
+      document.getElementById('streak-display').innerHTML = '<span style="color:var(--accent);">🔥 '+stats.streak_days+'天</span>';
+    } else if (stats.streak_days > 0) {
+      document.getElementById('streak-display').textContent = '🔥 '+stats.streak_days+'天';
+    }
+
+    // Time-based emotion
+    if (!currentEmotion || currentEmotion === stats.emotion) {
+      renderPet(stats.time_emotion || stats.emotion || 'happy');
+    }
+  } catch(e) {}
+}
+
+async function renamePet() {
+  const name = prompt('给你的戳戳起个名字:', petName);
+  if (!name) return;
+  petName = name;
+  try {
+    await fetch(API+'/api/rename', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name})
+    });
+    document.getElementById('pet-name').textContent = name;
+    showBubble('我叫'+name+'！');
+  } catch(e) {}
+}
+
+function toggleInfo() {
+  const msg = `🖐️ ${petName} · Lv.${stats.level}
+───────────────
+📊 经验: ${stats.xp}/${stats.xp_to_next}
+🔥 连续: ${stats.streak_days}天
+👆 总戳: ${stats.total_pokes}
+📅 今日: ${stats.pokes_today}
+
+每戳一次 +10XP
+连续 7 天解锁新表情！`;
+  showBubble(msg.replace(/\n/g,' · '));
+}
+
+async function checkEvolution() {
+  if (stats.level >= 10) {
+    try {
+      const r = await fetch(API+'/api/evolve', {method:'POST'});
+      const d = await r.json();
+      if (d.evolved) showBubble(d.message);
+    } catch(e) {}
+  }
+}
+
+// ── Init ───────────────────────────────────────────────────────
+
+setInterval(loadStats, 10000);  // Poll every 10s
+renderPet('happy');
+loadStats();
+
+// Idle animations — occasionally change emotion
+setInterval(() => {
+  if (document.hidden) return;
+  const emotions = Object.keys(EMOTIONS);
+  // Bias towards time-of-day emotion
+  const h = new Date().getHours();
+  const bias = (6<=h&&h<12) ? 'happy' : (14<=h&&h<16) ? 'sleepy' : (16<=h&&h<18) ? 'excited' : 'happy';
+  const emotion = Math.random() < 0.5 ? bias : emotions[Math.floor(Math.random()*emotions.length)];
+  if (document.visibilityState === 'visible') renderPet(emotion);
+}, 30000);
+</script>
+</body>
+</html>
