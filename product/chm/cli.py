@@ -610,5 +610,49 @@ def badge(path: str, output: str, shields: bool):
             click.echo(svg)
 
 
+@main.command()
+@click.argument("path", default=".", type=click.Path(exists=True))
+def doctor(path: str):
+    """Run a full diagnosis and get an actionable prescription.
+
+    Analyzes all 8 health dimensions and outputs a prioritized list
+    of specific, actionable recommendations to improve your codebase.
+    """
+    from chm.doctor import Doctor
+
+    repo_path = Path(path).resolve()
+    try:
+        diagnosis = Doctor(str(repo_path)).diagnose()
+    except ValueError as e:
+        click.echo(f"❌ {e}", err=True)
+        sys.exit(1)
+
+    score = diagnosis["health_score"]
+    color = "green" if score >= 70 else "yellow" if score >= 40 else "red"
+
+    click.echo(f"""
+{click.style('🏥 CHM Doctor — Diagnosis for ' + diagnosis['repo'], bold=True)}
+{'═' * 60}
+
+  Health Score: {click.style(f'{score}/100', fg=color)}
+
+  {diagnosis['summary']}
+""")
+
+    for i, p in enumerate(diagnosis["prescriptions"]):
+        icon = {"critical": "🚨", "high": "⚠️", "medium": "📝", "low": "💡"}.get(p["priority"], "•")
+        pri_color = {"critical": "red", "high": "yellow", "medium": "blue", "low": "white"}.get(p["priority"], "white")
+
+        tag = f"[{p['category']}] {p['title']}"
+        click.echo(f"\n  {icon} {click.style(tag, fg=pri_color, bold=True)}")
+        click.echo(f"  {p['detail']}")
+        click.echo(f"\n  {click.style('处方:', bold=True)}")
+        for action in p["actions"]:
+            click.echo(f"    {click.style('▸', fg='green')} {action}")
+
+    click.echo(f"\n{'═' * 60}")
+    click.echo(f"  {len(diagnosis['prescriptions'])} issues found. Start from the top.\n")
+
+
 if __name__ == "__main__":
     main()
