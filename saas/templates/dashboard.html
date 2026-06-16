@@ -58,6 +58,23 @@
 </div>
 
 <script>
+// Check for Stripe return
+const urlParams = new URLSearchParams(window.location.search);
+const stripeSession = urlParams.get('session_id');
+if (stripeSession) {
+    fetch('/api/payment/verify', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({session_id: stripeSession, provider: 'stripe'})
+    }).then(r => r.json()).then(d => {
+        if (d.success) {
+            alert('✅ 支付成功！' + d.plan.toUpperCase() + ' 方案已激活。');
+            window.history.replaceState({}, '', '/dashboard');
+            loadDashboard();
+        }
+    });
+}
+
 async function loadDashboard() {
     // Load user + subscription
     const meRes = await fetch('/api/auth/me');

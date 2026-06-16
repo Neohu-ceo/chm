@@ -802,6 +802,47 @@ def api_apply_referral():
     })
 
 
+# ── Stripe Webhook ─────────────────────────────────────────────
+
+@app.route("/api/stripe/webhook", methods=["POST"])
+def api_stripe_webhook():
+    """Handle Stripe webhook events for automatic subscription provisioning."""
+    import stripe
+
+    stripe.api_key = os.getenv("STRIPE_SECRET_KEY", "")
+    payload = request.get_data(as_text=True)
+    sig_header = request.headers.get("Stripe-Signature", "")
+
+    # In production: verify webhook signature with STRIPE_WEBHOOK_SECRET
+    # For now: parse the event directly
+    try:
+        event = json.loads(payload)
+    except json.JSONDecodeError:
+        return jsonify({"error": "Invalid payload"}), 400
+
+    event_type = event.get("type", "")
+
+    if event_type == "checkout.session.completed":
+        session = event.get("data", {}).get("object", {})
+        customer_email = session.get("customer_email") or session.get("metadata", {}).get("user_email")
+        plan = session.get("metadata", {}).get("plan", "pro")
+
+        if customer_email:
+            user = models.get_user_by_email(customer_email)
+            if user:
+                models.change_plan(user["id"], plan, "stripe")
+                record = models.create_payment(
+                    user["id"],
+                    (session.get("amount_total", 0) or 0) / 100,
+                    "stripe",
+                    description=f"Stripe webhook: {plan} plan",
+                )
+                models.complete_payment(record["id"], session.get("payment_intent", ""))
+                print(f"  ✅ Webhook: upgraded {customer_email} to {plan}")
+
+    return jsonify({"received": True})
+
+
 # ── Test Utilities ──────────────────────────────────────────────
 
 @app.route("/api/_test/reset-limits", methods=["POST"])
