@@ -654,5 +654,27 @@ def doctor(path: str):
     click.echo(f"  {len(diagnosis['prescriptions'])} issues found. Start from the top.\n")
 
 
+@main.command()
+def demo():
+    """Run a demonstration with a generated repo — no git project needed.
+
+    Creates a realistic demo repository with 23 commits from 3 contributors
+    and runs a full analysis. Perfect for trying out CHM.
+    """
+    from chm.demo import create_demo_repo
+
+    click.echo(f"{click.style('🎬 Generating demo repository...', fg='yellow')}")
+    repo_path = create_demo_repo()
+    click.echo(f"   Demo repo: {repo_path}")
+
+    click.echo(f"\n{click.style('🔍 Running full analysis...', fg='yellow')}")
+    import sys as _sys
+    _sys.argv = ["chm", "analyze", repo_path, "--report", "terminal"]
+    try:
+        main(standalone_mode=False)
+    except SystemExit:
+        pass
+
+
 if __name__ == "__main__":
     main()
