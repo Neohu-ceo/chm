@@ -143,9 +143,10 @@ class FloatPet:
         m = tk.Menu(self.r, tearoff=0)
         m.add_command(label="👆 戳一下 (+快乐)", command=self.poke)
         m.add_command(label="🍔 喂食 (-10🪙 +饱腹)", command=self.feed)
-        m.add_command(label="🎮 玩耍 (+快乐 -体力)", command=self.play)
+        m.add_command(label="🎮 小游戏 (赚XP!)", command=self._start_minigame)
         m.add_command(label="💤 睡觉 (+体力)", command=self.sleep_pet)
         m.add_separator()
+        m.add_command(label="🥚 领新蛋 (Lv.10解锁)", command=self._new_egg)
         m.add_command(label="📊 状态面板", command=self._show_stats)
         m.add_command(label="✏️ 改名", command=self._rename)
         m.add_separator()
@@ -314,6 +315,9 @@ class FloatPet:
     def _auto_refresh(self):
         self._load_state()
         self.render()
+        # Random events sometimes
+        if random.random() < 0.15:
+            self._random_event()
         self.r.after(10000, self._auto_refresh)
 
     # ── Interactions ─────────────────────────────────────────────
@@ -439,6 +443,120 @@ class FloatPet:
 
     def _drag_move(self, e):
         self.r.geometry(f"+{e.x_root - self.drag_ox}+{e.y_root - self.drag_oy}")
+
+    # ── Mini-Game: Tap Rush ───────────────────────────────────
+
+    def _start_minigame(self):
+        """Tap the pet rapidly in 5 seconds!"""
+        self.game_score = 0
+        self.game_active = True
+        self.game_start = __import__('time').time()
+        self.game_duration = 5
+
+        # Overlay game UI
+        self._draw_game_ui()
+        self.r.after(50, self._game_tick)
+
+    def _draw_game_ui(self):
+        elapsed = __import__('time').time() - self.game_start
+        remaining = max(0, self.game_duration - elapsed)
+
+        # Game overlay on top of pet
+        self.c.create_rectangle(0, 0, 220, 360, fill="#1a1a1a", outline="", stipple="gray50", tags="game")
+        self.c.create_text(110, 40, text="🎮 疯狂戳击！",
+                           fill="#ff6b35", font=("PingFang SC", 14, "bold"), tags="game")
+        self.c.create_text(110, 70, text=f"⏱ {remaining:.1f}s",
+                           fill="#fff", font=("PingFang SC", 12), tags="game")
+        self.c.create_text(110, 100, text=f"👆 {self.game_score} 戳",
+                           fill="#fbbf24", font=("PingFang SC", 16, "bold"), tags="game")
+        self.c.create_text(110, 160, text="戳我戳我戳我！",
+                           fill="#aaa", font=("PingFang SC", 11), tags="game")
+        self.c.create_text(110, 180, text="疯狂点击下方区域",
+                           fill="#666", font=("PingFang SC", 9), tags="game")
+
+        # Big tap target
+        self.c.create_rectangle(40, 200, 180, 300, fill="#2a1410", outline="#ff6b35", width=2, tags="game")
+        self.c.create_text(110, 250, text="👆 TAP HERE 👆",
+                           fill="#ff6b35", font=("PingFang SC", 13, "bold"), tags="game")
+
+        # Bind click on game area
+        self.c.tag_bind("game", "<Button-1>", self._game_tap)
+
+    def _game_tap(self, event):
+        if not getattr(self, 'game_active', False):
+            return
+        self.game_score += 1
+        # Quick visual feedback
+        self.c.create_text(event.x + random.randint(-20, 20),
+                           event.y - random.randint(10, 30),
+                           text="+1", fill="#fbbf24",
+                           font=("PingFang SC", 10, "bold"), tags="gameflash")
+        self.r.after(300, lambda: self.c.delete("gameflash"))
+
+    def _game_tick(self):
+        if not getattr(self, 'game_active', False):
+            return
+        elapsed = __import__('time').time() - self.game_start
+        remaining = max(0, self.game_duration - elapsed)
+
+        # Update timer
+        self.c.delete("game")
+        self._draw_game_ui()
+
+        if remaining <= 0:
+            self._end_game()
+        else:
+            self.r.after(50, self._game_tick)
+
+    def _end_game(self):
+        self.game_active = False
+        self.c.delete("game")
+        self.c.delete("gameflash")
+
+        score = self.game_score
+        xp_earned = score * 3
+        coins_earned = max(1, score // 5)
+
+        # Submit scores via API
+        for _ in range(min(score, 20)):
+            d = self.api("/api/poke")
+
+        self.msg(f"🎉 {score}戳! +{xp_earned}XP +{coins_earned}🪙")
+        self.render()
+
+        # Milestone rewards
+        if score >= 30:
+            self.r.after(2000, lambda: self.msg("🏆 新纪录！"))
+        if score >= 50:
+            self.r.after(2500, lambda: self.msg("👑 你是戳戳之王！"))
+
+    # ── Random Events ──────────────────────────────────────────
+
+    def _random_event(self):
+        """Occasionally trigger random events."""
+        if random.random() < 0.3:  # 30% chance every check
+            events = [
+                ("🦋 一只蝴蝶飞过！+5快乐", lambda: None),
+                ("🎁 捡到 3 个金币！+3🪙", None),
+                ("💡 灵光一闪！+20XP", None),
+                ("😴 它打了个哈欠...", None),
+                ("❤️ 戳戳想你了", None),
+            ]
+            msg, _ = random.choice(events)
+            self.msg(msg)
+
+    def _new_egg(self):
+        """Get a new egg (requires Lv.10)."""
+        if self.level < 10:
+            self.msg("需要 Lv.10 才能领新蛋哦~")
+            return
+        self.msg("🥚 新蛋已放入背包！重启后孵化。")
+        # Reset level but keep collection
+        try:
+            req = urllib.request.Request(f"{API}/api/state", method="GET")
+            with urllib.request.urlopen(req, timeout=2) as r:
+                pass
+        except: pass
 
     def _hatch_complete(self):
         self.hatching = False
