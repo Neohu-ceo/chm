@@ -1,0 +1,430 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1400"><title>戳戳养成系统 — 完整模拟</title><style>
+:root{--bg:#0d0d0d;--card:#1a1a1a;--text:#e0d8d0;--muted:#888;--accent:#ff6b35}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'PingFang SC',-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
+.container{max-width:1200px;margin:0 auto;padding:2rem}
+h1{text-align:center;font-size:2.5rem;font-weight:900;margin:2rem 0 .5rem}
+h1 span{color:var(--accent)}
+.sub{text-align:center;color:var(--muted);margin-bottom:3rem}
+
+/* Species card */
+.species-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1.5rem;margin-bottom:3rem}
+.species-card{background:var(--card);border-radius:20px;padding:1.5rem;border:1px solid #222;transition:.2s}
+.species-card:hover{transform:translateY(-2px);border-color:#444}
+.species-card .header{display:flex;align-items:center;gap:.75rem;margin-bottom:1rem}
+.species-card .header .icon{font-size:2.5rem}
+.species-card .header .info h3{font-size:1.1rem}
+.species-card .header .info .rarity{font-size:.75rem;padding:.1rem .5rem;border-radius:10px;display:inline-block}
+.rarity-common{background:#333;color:#aaa}
+.rarity-uncommon{background:#1a2a1a;color:#6baf6b}
+.rarity-rare{background:#1a1a2a;color:#93c5fd}
+.rarity-legendary{background:#2a1a0a;color:#fbbf24}
+
+/* Evolution stages */
+.stages{display:flex;gap:.5rem;justify-content:center;margin:1rem 0}
+.stage{flex:1;text-align:center;background:#111;border-radius:12px;padding:.75rem .25rem;min-width:60px}
+.stage .pixel-preview{width:64px;height:64px;margin:0 auto .25rem;border-radius:8px;display:grid;gap:1px;padding:2px}
+.stage .pixel-preview .px{border-radius:1px}
+.stage .name{font-size:.65rem;color:var(--muted);margin-top:.15rem}
+.stage .lv{font-size:.6rem;color:#555}
+
+.stage.active{border:2px solid var(--accent)}
+.stage.hatched{border:1px solid #444}
+
+/* How to get */
+.how{font-size:.8rem;color:var(--muted);margin-top:.5rem;font-style:italic}
+
+/* Flow section */
+.flow{background:var(--card);border-radius:20px;padding:2rem;margin:3rem 0;border:1px solid #222}
+.flow h2{text-align:center;margin-bottom:1.5rem}
+.flow-steps{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;align-items:center}
+.flow-step{text-align:center;min-width:100px}
+.flow-step .big{font-size:2.5rem}
+.flow-step .label{font-size:.8rem;color:var(--muted);margin-top:.25rem}
+.flow-arrow{font-size:1.5rem;color:var(--accent)}
+
+/* Interaction guide */
+.guide-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin:2rem 0}
+.guide{background:var(--card);border-radius:16px;padding:1.25rem;border:1px solid #222}
+.guide .emoji{font-size:1.8rem;margin-bottom:.5rem}
+.guide h4{font-size:.95rem;margin-bottom:.25rem}
+.guide p{font-size:.8rem;color:var(--muted)}
+
+/* Hatch demo */
+.hatch-demo{background:linear-gradient(135deg,#1a1410,#1a1a1a);border-radius:24px;padding:2rem;text-align:center;margin:2rem 0;border:1px solid #333}
+.hatch-demo h3{margin-bottom:1rem}
+.hatch-timeline{display:flex;gap:2rem;justify-content:center;align-items:center;flex-wrap:wrap}
+.hatch-phase{text-align:center}
+.hatch-phase .icon{font-size:3rem}
+.hatch-phase .text{font-size:.85rem;color:var(--muted);margin-top:.5rem}
+
+/* Species colors */
+.c-cat{color:#ff9c6e}.c-dragon{color:#ff6b6b}.c-ghost{color:#c4b5fd}.c-fox{color:#f59e0b}
+.c-bunny{color:#fbcfe8}.c-plant{color:#86efac}.c-penguin{color:#93c5fd}.c-shiny{color:#fbbf24}
+
+footer{text-align:center;padding:3rem;color:#333;font-size:.8rem}
+</style></head><body>
+<div class="container">
+
+<h1>戳戳 <span>养成系统</span></h1>
+<p class="sub">开局一个蛋 · 行为决定品种 · 4 阶段进化 · 8 种随机宠物</p>
+
+<!-- Hatch demo -->
+<div class="hatch-demo">
+  <h3>🥚 你的蛋 → 你的行为 → 你的专属宠物</h3>
+  <div class="hatch-timeline">
+    <div class="hatch-phase"><div class="icon">🥚</div><div class="text">开局一颗蛋</div></div>
+    <div style="font-size:2rem;color:var(--accent);">→</div>
+    <div class="hatch-phase"><div class="icon">👆🍔🎮💤</div><div class="text">你的互动方式</div></div>
+    <div style="font-size:2rem;color:var(--accent);">→</div>
+    <div class="hatch-phase"><div class="icon">🐉🐱👻🦊🐰🌱🐧✨</div><div class="text">决定孵化品种</div></div>
+  </div>
+</div>
+
+<!-- All 8 species -->
+<h2 style="text-align:center;margin:3rem 0 1.5rem;">🎭 8 种宠物 · 完整进化树</h2>
+
+<div class="species-grid">
+
+<!-- CAT -->
+<div class="species-card">
+  <div class="header">
+    <div class="icon">🐱</div>
+    <div class="info">
+      <h3 class="c-cat">糯米 · 猫猫</h3>
+      <span class="rarity rarity-common">普通</span>
+    </div>
+  </div>
+  <p style="font-size:.85rem;color:var(--muted);margin-bottom:.75rem;">黏人小猫咪，平衡型伴侣。均衡喂养就跟你。</p>
+  <div class="stages">
+    <div class="stage"><div class="pixel-preview" id="cat-egg"></div><div class="name">蛋</div><div class="lv">Lv.0</div></div>
+    <div class="stage"><div class="pixel-preview" id="cat-baby"></div><div class="name">幼猫</div><div class="lv">Lv.2</div></div>
+    <div class="stage"><div class="pixel-preview" id="cat-adult"></div><div class="name">猫咪</div><div class="lv">Lv.5</div></div>
+    <div class="stage"><div class="pixel-preview" id="cat-perfect"></div><div class="name">猫主子</div><div class="lv">Lv.10</div></div>
+  </div>
+  <div class="how">🎯 孵化条件：均衡互动（戳/喂/玩都有）</div>
+</div>
+
+<!-- DRAGON -->
+<div class="species-card">
+  <div class="header">
+    <div class="icon">🐉</div>
+    <div class="info">
+      <h3 class="c-dragon">小龙 · 幼龙</h3>
+      <span class="rarity rarity-rare">稀有</span>
+    </div>
+  </div>
+  <p style="font-size:.85rem;color:var(--muted);margin-bottom:.75rem;">暴躁小火龙，戳得越多越亲近。别停，它喜欢被戳。</p>
+  <div class="stages">
+    <div class="stage"><div class="pixel-preview" id="dragon-egg"></div><div class="name">龙蛋</div><div class="lv">Lv.0</div></div>
+    <div class="stage"><div class="pixel-preview" id="dragon-baby"></div><div class="name">幼龙</div><div class="lv">Lv.2</div></div>
+    <div class="stage"><div class="pixel-preview" id="dragon-adult"></div><div class="name">火龙</div><div class="lv">Lv.5</div></div>
+    <div class="stage"><div class="pixel-preview" id="dragon-perfect"></div><div class="name">炎龙</div><div class="lv">Lv.10</div></div>
+  </div>
+  <div class="how">🎯 孵化条件：戳击次数 >> 喂食次数（戳击狂魔）</div>
+</div>
+
+<!-- GHOST -->
+<div class="species-card">
+  <div class="header">
+    <div class="icon">👻</div>
+    <div class="info">
+      <h3 class="c-ghost">噗噗 · 幽灵</h3>
+      <span class="rarity rarity-common">普通</span>
+    </div>
+  </div>
+  <p style="font-size:.85rem;color:var(--muted);margin-bottom:.75rem;">害羞小幽灵，夜间更活跃。晚上来看它会有惊喜。</p>
+  <div class="stages">
+    <div class="stage"><div class="pixel-preview" id="ghost-egg"></div><div class="name">蛋</div><div class="lv">Lv.0</div></div>
+    <div class="stage"><div class="pixel-preview" id="ghost-baby"></div><div class="name">小幽灵</div><div class="lv">Lv.2</div></div>
+    <div class="stage"><div class="pixel-preview" id="ghost-adult"></div><div class="name">幽灵</div><div class="lv">Lv.5</div></div>
+    <div class="stage"><div class="pixel-preview" id="ghost-perfect"></div><div class="name">暗夜精灵</div><div class="lv">Lv.10</div></div>
+  </div>
+  <div class="how">🎯 孵化条件：夜间活跃（22:00-05:00 互动概率高）</div>
+</div>
+
+<!-- FOX -->
+<div class="species-card">
+  <div class="header">
+    <div class="icon">🦊</div>
+    <div class="info">
+      <h3 class="c-fox">灵灵 · 狐狸</h3>
+      <span class="rarity rarity-uncommon">罕见</span>
+    </div>
+  </div>
+  <p style="font-size:.85rem;color:var(--muted);margin-bottom:.75rem;">聪明小狐狸，投喂多了就认定你是主人。</p>
+  <div class="stages">
+    <div class="stage"><div class="pixel-preview" id="fox-egg"></div><div class="name">蛋</div><div class="lv">Lv.0</div></div>
+    <div class="stage"><div class="pixel-preview" id="fox-baby"></div><div class="name">小狐</div><div class="lv">Lv.2</div></div>
+    <div class="stage"><div class="pixel-preview" id="fox-adult"></div><div class="name">灵狐</div><div class="lv">Lv.5</div></div>
+    <div class="stage"><div class="pixel-preview" id="fox-perfect"></div><div class="name">九尾</div><div class="lv">Lv.10</div></div>
+  </div>
+  <div class="how">🎯 孵化条件：喂食次数 > 戳击 + 玩耍</div>
+</div>
+
+<!-- BUNNY -->
+<div class="species-card">
+  <div class="header">
+    <div class="icon">🐰</div>
+    <div class="info">
+      <h3 class="c-bunny">团团 · 兔子</h3>
+      <span class="rarity rarity-common">普通</span>
+    </div>
+  </div>
+  <p style="font-size:.85rem;color:var(--muted);margin-bottom:.75rem;">蹦蹦跳跳小白兔，玩耍狂魔。根本停不下来。</p>
+  <div class="stages">
+    <div class="stage"><div class="pixel-preview" id="bunny-egg"></div><div class="name">蛋</div><div class="lv">Lv.0</div></div>
+    <div class="stage"><div class="pixel-preview" id="bunny-baby"></div><div class="name">小兔</div><div class="lv">Lv.2</div></div>
+    <div class="stage"><div class="pixel-preview" id="bunny-adult"></div><div class="name">兔子</div><div class="lv">Lv.5</div></div>
+    <div class="stage"><div class="pixel-preview" id="bunny-perfect"></div><div class="name">月兔</div><div class="lv">Lv.10</div></div>
+  </div>
+  <div class="how">🎯 孵化条件：玩耍次数 > 戳击×2</div>
+</div>
+
+<!-- PLANT -->
+<div class="species-card">
+  <div class="header">
+    <div class="icon">🌱</div>
+    <div class="info">
+      <h3 class="c-plant">芽芽 · 精灵</h3>
+      <span class="rarity rarity-uncommon">罕见</span>
+    </div>
+  </div>
+  <p style="font-size:.85rem;color:var(--muted);margin-bottom:.75rem;">安静的植物精灵，按时睡觉就会开出最美的花。</p>
+  <div class="stages">
+    <div class="stage"><div class="pixel-preview" id="plant-egg"></div><div class="name">种子</div><div class="lv">Lv.0</div></div>
+    <div class="stage"><div class="pixel-preview" id="plant-baby"></div><div class="name">嫩芽</div><div class="lv">Lv.2</div></div>
+    <div class="stage"><div class="pixel-preview" id="plant-adult"></div><div class="name">精灵</div><div class="lv">Lv.5</div></div>
+    <div class="stage"><div class="pixel-preview" id="plant-perfect"></div><div class="name">花仙子</div><div class="lv">Lv.10</div></div>
+  </div>
+  <div class="how">🎯 孵化条件：睡觉频率高</div>
+</div>
+
+<!-- PENGUIN -->
+<div class="species-card">
+  <div class="header">
+    <div class="icon">🐧</div>
+    <div class="info">
+      <h3 class="c-penguin">冰冰 · 企鹅</h3>
+      <span class="rarity rarity-rare">稀有</span>
+    </div>
+  </div>
+  <p style="font-size:.85rem;color:var(--muted);margin-bottom:.75rem;">高冷小企鹅。只有连续打卡的人才配拥有它。</p>
+  <div class="stages">
+    <div class="stage"><div class="pixel-preview" id="penguin-egg"></div><div class="name">冰蛋</div><div class="lv">Lv.0</div></div>
+    <div class="stage"><div class="pixel-preview" id="penguin-baby"></div><div class="name">小企鹅</div><div class="lv">Lv.2</div></div>
+    <div class="stage"><div class="pixel-preview" id="penguin-adult"></div><div class="name">企鹅</div><div class="lv">Lv.5</div></div>
+    <div class="stage"><div class="pixel-preview" id="penguin-perfect"></div><div class="name">冰帝</div><div class="lv">Lv.10</div></div>
+  </div>
+  <div class="how">🎯 孵化条件：连续 5 天打卡</div>
+</div>
+
+<!-- SHINY -->
+<div class="species-card" style="border-color:rgba(251,191,36,.3);">
+  <div class="header">
+    <div class="icon">✨</div>
+    <div class="info">
+      <h3 class="c-shiny">星尘 · 幻兽</h3>
+      <span class="rarity rarity-legendary">传说 (1%)</span>
+    </div>
+  </div>
+  <p style="font-size:.85rem;color:var(--muted);margin-bottom:.75rem;">万中无一的天选之蛋。满身星光，独一无二。</p>
+  <div class="stages">
+    <div class="stage"><div class="pixel-preview" id="shiny-egg"></div><div class="name">星蛋</div><div class="lv">Lv.0</div></div>
+    <div class="stage"><div class="pixel-preview" id="shiny-baby"></div><div class="name">星灵</div><div class="lv">Lv.2</div></div>
+    <div class="stage"><div class="pixel-preview" id="shiny-adult"></div><div class="name">幻兽</div><div class="lv">Lv.5</div></div>
+    <div class="stage"><div class="pixel-preview" id="shiny-perfect"></div><div class="name">星之神</div><div class="lv">Lv.10</div></div>
+  </div>
+  <div class="how">🎯 孵化条件：纯 1% 运气 ✨</div>
+</div>
+
+</div>
+
+<!-- Gameplay Flow -->
+<div class="flow">
+  <h2>🔄 完整养成循环</h2>
+  <div class="flow-steps">
+    <div class="flow-step"><div class="big">🥚</div><div class="label">1.开局一颗蛋</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><div class="big">👆</div><div class="label">2.戳戳攒 XP</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><div class="big">Lv.2</div><div class="label">3.蛋孵化!</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><div class="big">🐉</div><div class="label">4.随机品种</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><div class="big">Lv.5</div><div class="label">5.成年进化</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><div class="big">Lv.10</div><div class="label">6.完全体!</div></div>
+  </div>
+</div>
+
+<!-- All interactions -->
+<h2 style="text-align:center;margin:3rem 0 1.5rem;">🎮 互动方式 × 对属性的影响</h2>
+<div class="guide-grid">
+  <div class="guide"><div class="emoji">👆 戳击</div><h4>+8 快乐 · -2 体力 · +10XP</h4><p>最基础的互动。戳得多 → 容易孵出龙。</p></div>
+  <div class="guide"><div class="emoji">🍔 喂食</div><h4>+25 饱腹 · +5 快乐 · +15XP</h4><p>花费 10🪙。喂得多 → 容易孵出狐狸。</p></div>
+  <div class="guide"><div class="emoji">🎮 玩耍</div><h4>+15 快乐 · -15 体力 · +20XP</h4><p>XP 最高。玩得多 → 容易孵出兔子。</p></div>
+  <div class="guide"><div class="emoji">💤 睡觉</div><h4>+40 体力 · -10 饱腹 · +5XP</h4><p>恢复体力。睡得多 → 容易孵出植物精灵。</p></div>
+  <div class="guide"><div class="emoji">🔥 打卡</div><h4>连续天数系统</h4><p>每天来戳一次。连续 5 天 → 必定孵出企鹅。</p></div>
+  <div class="guide"><div class="emoji">🌙 时段</div><h4>时间影响情绪</h4><p>早上犯困/下午兴奋/夜间幽灵出没。</p></div>
+  <div class="guide"><div class="emoji">🛍️ 商店</div><h4>配饰装扮</h4><p>金币买帽子/墨镜/猫耳/领结/皇冠。</p></div>
+  <div class="guide"><div class="emoji">📊 每日任务</div><h4>4 个任务 + 7 个成就</h4><p>戳 10 次/喂 5 次/玩 3 次/连续 3 天。</p></div>
+</div>
+
+<footer>🖐️ 戳戳 ChuoChuo v2.1 · Lighthouse Analytics · 2026</footer>
+
+</div>
+
+<script>
+// ── Draw pixel art for each species at each stage ──
+
+const SPECIES_PIXELS = {
+  cat: {
+    baby: [
+      "      ##      ","     ####     ","    ######    ","   ########   ","  ## #### ##  ","  ##########  ","  ##########  ","   ########   ","    ######    ","   ## ## ##   ","   # # # # #  ","   # # # # #  ","   ## ## ##   ","    #    #    ","    #    #    ","    #    #    ",
+    ],
+    adult: [
+      "     ####     ","   ########   ","  ##########  "," ## ##########"," ## ##########","##############","##############","## ######## ##"," ##############","  ##########  ","  ## #### ##  ","   # #  # #   ","   # #  # #   ","   ##    ##   ","   #      #   ","   #      #   ",
+    ],
+    perfect: [
+      "    ######    ","   ########   ","  ##########  "," ############ ","##############","##############","##############","##############"," ############ ","  ##########  ","   ########   ","  ## ### ##   ","  #  ###  #   ","  #  # #  #   ","  ##  #  ##   ","   ##   ##    ",
+    ],
+  },
+  dragon: {
+    baby: [
+      "      ##      ","     ####     ","   ########   ","  ##########  "," ############ "," ############ ","##############","##############"," ############ "," ############ ","   ########   ","   ## ## ##   ","  ##  ##  ##  ","  #   ##   #  ","  #   ##   #  "," ##   ##   ## ",
+    ],
+    adult: [
+      "     ####     ","   ########   ","  ##########  "," ############ ","##############","##############","##############","##############","##############"," ############ ","  ## ######   ","  ##  ####    "," ##   ####    "," #    ###     "," #    ###     ","##    ###     ",
+    ],
+    perfect: [
+      "    ######    ","   ########   ","  ##########  "," ############ ","##############","##############","##############","##############","##############","##############","  ##########  "," ## ###### ## "," #   ####   # "," #   ####   # ","##   ####   ##","     ####     ",
+    ],
+  },
+  ghost: {
+    baby: [
+      "              ","   ########   ","  ##########  "," ############ ","##############","##############","##############","##   ####   ##","##    ##    ##","##          ##","##  #    #  ##","##   #  #   ##"," #   #  #   # "," #   ####   # ","  #   ##   #  ","   ##    ##   ",
+    ],
+    adult: [
+      "   ########   ","  ##########  "," ############ ","##############","##############","##############","##############","##   ####   ##","##    ##    ##","##          ##","##  # ## #  ##","##  # ## #  ##"," #   ####   # ","  #   ##   #  ","   ##    ##   ","     ######    ",
+    ],
+    perfect: [
+      "  ##########  "," ############ ","##############","##############","##############","##############","##############","##  ######  ##","##   ####   ##","##    ##    ##","##  # ## #  ##","## # #  # # ##"," #  # ## #  # "," #   ####   # ","  #   ##   #  ","   ##    ##   ",
+    ],
+  },
+  fox: {
+    baby: [
+      "      ##      ","     ####     ","    ######    ","  ##  ##  ##  ","  ##########  ","  ##########  "," ############ "," ############ "," ############ ","   ########   ","   ########   ","   ## ## ##   ","  ##  ##  ##  ","  #   ##   #  "," ##   ##   ## ","              ",
+    ],
+    adult: [
+      "     ####     ","    ######    ","  ##########  "," ############ ","##############","##############","##############","##   ####   ##","##############"," ############ ","  ##########  ","   ########   ","   ## ## ##   ","  ##  ##  ##  ","  #   ##   #  "," ##   ##   ## ",
+    ],
+    perfect: [
+      "    ######    ","   ########   "," ############ ","##############","##############","##############","##############","##  ######  ##","##############","##############"," ############ ","   ########   ","  ##  ##  ##  ","  #   ##   #  ","  #   ##   #  "," ##   ##   ## ",
+    ],
+  },
+  bunny: {
+    baby: [
+      "              ","      ##      ","     ####     ","    ######    ","   ########   ","  ##########  ","  ##########  ","  ## #### ##  ","   ########   ","    ######    ","    # ## #    ","    # ## #    ","    # ## #    ","   ##    ##   ","   #      #   ","   #      #   ",
+    ],
+    adult: [
+      "     ####     ","    ######   ","  ##########  "," ############ ","##############","##############","## ######## ##","## ######## ##"," ############ ","  ##########  ","   ########   ","   # #### #   ","   # #### #   ","   #  ##  #   ","  ##  ##  ##  ","  #        #  ",
+    ],
+    perfect: [
+      "    ######    ","   ########   ","  ##########  "," ############ ","##############","##############","##############","##############"," ############ ","   ########   ","   #  ##  #   ","   # #### #   ","   # #  # #   ","   #  ##  #   ","  ##  ##  ##  ","  #        #  ",
+    ],
+  },
+  plant: {
+    baby: [
+      "              ","              ","      ##      ","     ####     ","    ######    ","     ####     ","      ##      ","      ##      ","     ####     ","    ######    ","   ########   ","  ##########  ","  ##########  ","   ########   ","    ######    ","     ####     ",
+    ],
+    adult: [
+      "     ####     ","    ######    ","   ########   ","  ##########  "," ############ ","##############","     ####     ","     ####     ","    ######    ","   ########   ","  ##########  "," ############ ","##############"," ############ ","  ##########  ","   ########   ",
+    ],
+    perfect: [
+      "    ######    ","   ########   ","  ##########  "," ############ ","##############","##############","    ######    ","    ######    ","   ########   ","  ##########  "," ############ ","##############","##############","############"," ##########  ","  ########  ",
+    ],
+  },
+  penguin: {
+    baby: [
+      "     ####     ","    ######    ","   ########   ","  ##########  ","  ##########  "," ############ "," ############ ","##############","##############"," ############ ","   ########   ","   ## ## ##   ","   ## ## ##   ","   ## ## ##   ","   #  ##  #   ","   #      #   ",
+    ],
+    adult: [
+      "    ######    ","   ########   ","  ##########  "," ############ "," ############ ","##############","##############","##############","##############"," ############ ","  ##########  ","   ########   ","   ## ## ##   ","   #  ##  #   ","   #  ##  #   ","   #      #   ",
+    ],
+    perfect: [
+      "   ########   ","  ##########  "," ############ ","##############","##############","##############","##############","##############","##############"," ############ ","  ##########  ","   ########   ","   ## ## ##   ","   #  ##  #   ","   #  ##  #   ","   #      #   ",
+    ],
+  },
+  shiny: {
+    baby: [
+      "      **      ","    ******    ","   ********   ","  **********  "," ************ ","*****  *******","*****    *****","****      ****","****      ****","***        ***","  **      **  ","   **    **   ","    **  **    ","     ****     ","      **      ","              ",
+    ],
+    adult: [
+      "    ******    ","   ********   ","  **********  "," ************ ","**************","**************","*****    *****","****      ****","****      ****","*****    *****","  **********  ","   ********   ","    **  **    ","    **  **    ","    **  **    ","    **  **    ",
+    ],
+    perfect: [
+      "   ********   ","  **********  "," ************ ","**************","**************","**************","***** ** *****","****  **  ****","****  **  ****","***** ** *****","**************","  **********  ","   ********   ","    **  **    ","    **  **    ","    **  **    ",
+    ],
+  },
+};
+
+// Colors for each species
+const SP_COLORS = {
+  cat:'#ff9c6e', dragon:'#ff6b6b', ghost:'#c4b5fd', fox:'#f59e0b',
+  bunny:'#fbcfe8', plant:'#86efac', penguin:'#93c5fd', shiny:'#fbbf24',
+};
+
+function drawPixel(containerId, species, stage) {
+  const el = document.getElementById(`${species}-${stage}`);
+  if (!el) return;
+
+  const patterns = SPECIES_PIXELS[species];
+  if (!patterns) return;
+
+  // egg is always the same for all species
+  const pat = stage === 'egg' ? [
+    "      ##      ","     ####     ","    ######    ","   ########   ","  ##########  ","  ##########  ","  ## ## ## ## ","  ## #  # ##  ","  ## #  # ##  ","  ## #  # ##  ","  ## ## ## ## ","   ## ## ##   ","    ##  ##    ","     ####     ","      ##      ","              ",
+  ] : (patterns[stage] || patterns.baby);
+
+  // For shiny, replace # with * in rendering
+  const showStar = (species === 'shiny');
+
+  const size = 64;
+  const rows = 16, cols = 16;
+  const pxSize = Math.floor((size - 4) / rows);
+
+  el.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  el.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+  el.style.width = `${size}px`;
+  el.style.height = `${size}px`;
+  el.style.background = '#111';
+
+  let html = '';
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const ch = (pat[r] || '                ')[c] || ' ';
+      let color = 'transparent';
+      if (ch === '#') color = SP_COLORS[species] || '#ff6b35';
+      if (ch === '*') color = '#fbbf24'; // star color for shiny
+      html += `<div class="px" style="background:${color}"></div>`;
+    }
+  }
+  el.innerHTML = html;
+}
+
+// Draw all species
+const SPECIES = ['cat','dragon','ghost','fox','bunny','plant','penguin','shiny'];
+const STAGES = ['egg','baby','adult','perfect'];
+
+SPECIES.forEach(sp => {
+  STAGES.forEach(st => drawPixel(sp+'-'+st, sp, st));
+});
+
+// Animate shiny
+setInterval(() => {
+  const el = document.getElementById('shiny-perfect');
+  if (el) el.style.boxShadow = Math.random() < 0.5 ? '0 0 12px #fbbf24' : 'none';
+}, 500);
+</script>
+</body></html>

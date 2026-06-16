@@ -1,41 +1,44 @@
 {
   "name": "\u6233\u6233",
-  "level": 5,
-  "xp": 72,
-  "xp_to_next": 284,
+  "level": 8,
+  "xp": 135,
+  "xp_to_next": 622,
   "stage": 2,
-  "hunger": 80,
+  "hunger": 100,
   "happiness": 100,
   "energy": 0,
-  "total_pokes": 64,
-  "total_feed": 0,
-  "total_plays": 0,
-  "total_sleeps": 0,
+  "total_pokes": 141,
+  "total_feed": 20,
+  "total_plays": 2,
+  "total_sleeps": 1,
   "streak_days": 1,
   "last_active_date": "2026-06-16",
-  "hatched_at": "2026-06-16T19:35:17.240602",
+  "hatched_at": "2026-06-16T19:40:41.201928",
   "emotion": "sleepy",
   "unlocked_emotions": [
-    "happy"
+    "happy",
+    "love"
   ],
-  "coins": 150,
+  "coins": 25,
   "accessories": [],
   "wearing": {},
   "quest_progress": {
-    "poke10": 64,
-    "feed5": 0,
-    "play3": 0,
+    "poke10": 141,
+    "feed5": 20,
+    "play3": 2,
     "streak3": 1
   },
   "achievements": [
     "first_poke",
-    "level_5"
+    "level_5",
+    "poke_100"
   ],
-  "species_id": "dragon",
-  "species_hatched_at": "2026-06-16T19:35:21.612207",
+  "species_id": "cat",
+  "species_hatched_at": "2026-06-16T19:40:43.175883",
   "shiny": false,
-  "_last_decay": "2026-06-16T19:35:21.496747",
+  "_last_decay": "2026-06-16T19:40:43.125357",
   "_completed_quests": [
-    "poke10"
+    "poke10",
+    "feed5"
   ]
 }
