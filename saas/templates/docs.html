@@ -1,0 +1,103 @@
+{% include "base_styles.html" %}
+<div class="nav">
+    <a href="/" class="nav-brand">🏠 Lighthouse Docs</a>
+    <div class="nav-links">
+        <a href="/dashboard">控制台</a>
+        <a href="/pricing">定价</a>
+        <a href="/docs">文档</a>
+    </div>
+</div>
+
+<div style="display:flex;max-width:1100px;margin:0 auto;min-height:100vh;">
+    <!-- Sidebar -->
+    <nav style="width:220px;padding:2rem 1rem;border-right:1px solid var(--border);position:sticky;top:0;height:100vh;overflow-y:auto;">
+        <h4 style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:.75rem;">Getting Started</h4>
+        <a href="#install" style="display:block;padding:.3rem 0;font-size:.85rem;color:var(--text);text-decoration:none;">安装</a>
+        <a href="#quickstart" style="display:block;padding:.3rem 0;font-size:.85rem;color:var(--text);text-decoration:none;">快速开始</a>
+        <a href="#demo" style="display:block;padding:.3rem 0;font-size:.85rem;color:var(--text);text-decoration:none;">在线演示</a>
+
+        <h4 style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin:1.5rem 0 .75rem;">Commands</h4>
+        <a href="#cmd-analyze" style="display:block;padding:.3rem 0;font-size:.85rem;color:var(--text);text-decoration:none;">analyze</a>
+        <a href="#cmd-doctor" style="display:block;padding:.3rem 0;font-size:.85rem;color:var(--text);text-decoration:none;">doctor</a>
+        <a href="#cmd-init" style="display:block;padding:.3rem 0;font-size:.85rem;color:var(--text);text-decoration:none;">init</a>
+        <a href="#cmd-badge" style="display:block;padding:.3rem 0;font-size:.85rem;color:var(--text);text-decoration:none;">badge</a>
+        <a href="#cmd-watch" style="display:block;padding:.3rem 0;font-size:.85rem;color:var(--text);text-decoration:none;">watch</a>
+        <a href="#cmd-mcp" style="display:block;padding:.3rem 0;font-size:.85rem;color:var(--text);text-decoration:none;">mcp</a>
+
+        <h4 style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin:1.5rem 0 .75rem;">SaaS API</h4>
+        <a href="#api-auth" style="display:block;padding:.3rem 0;font-size:.85rem;color:var(--text);text-decoration:none;">认证</a>
+        <a href="#api-keys" style="display:block;padding:.3rem 0;font-size:.85rem;color:var(--text);text-decoration:none;">API Keys</a>
+        <a href="#api-subs" style="display:block;padding:.3rem 0;font-size:.85rem;color:var(--text);text-decoration:none;">订阅</a>
+    </nav>
+
+    <!-- Content -->
+    <main style="flex:1;padding:2rem;max-width:750px;">
+        <h1>📚 Lighthouse Analytics Docs</h1>
+        <p style="color:var(--text-muted);margin-bottom:2rem;">Codebase Health Monitor — 完整文档</p>
+
+        <!-- Install -->
+        <section id="install" class="card">
+            <h3>📦 安装</h3>
+            <pre style="background:#1e293b;color:#e2e8f0;padding:.75rem;border-radius:8px;font-size:.85rem;">pip install chm-cli        <span style="color:#94a3b8;"># 基础 CLI</span>
+pip install chm-cli[mcp]   <span style="color:#94a3b8;"># 含 MCP 支持</span></pre>
+            <p style="font-size:.85rem;color:var(--text-muted);margin-top:.5rem;">需要 Python 3.9+ 和 Git</p>
+        </section>
+
+        <!-- Quick Start -->
+        <section id="quickstart" class="card">
+            <h3>🚀 快速开始</h3>
+            <pre style="background:#1e293b;color:#e2e8f0;padding:.75rem;border-radius:8px;font-size:.85rem;"><span style="color:#22c55e;">$</span> chm demo          <span style="color:#94a3b8;"># 无需真实项目，立即体验</span>
+<span style="color:#22c55e;">$</span> chm init .        <span style="color:#94a3b8;"># 在项目中初始化</span>
+<span style="color:#22c55e;">$</span> chm analyze .     <span style="color:#94a3b8;"># 完整 8 维分析</span>
+<span style="color:#22c55e;">$</span> chm doctor .      <span style="color:#94a3b8;"># 诊断 + 处方</span></pre>
+        </section>
+
+        <!-- Commands -->
+        <section id="cmd-analyze" class="card">
+            <h3>🔍 chm analyze</h3>
+            <p style="font-size:.85rem;color:var(--text-muted);">运行全部 8 个分析维度，输出健康度评分和详细报告。</p>
+            <pre style="background:#1e293b;color:#e2e8f0;padding:.75rem;border-radius:8px;font-size:.85rem;">chm analyze .                      <span style="color:#94a3b8;"># 终端输出</span>
+chm analyze . --report html -o r.html  <span style="color:#94a3b8;"># HTML 报告</span>
+chm analyze . --report json -o r.json  <span style="color:#94a3b8;"># JSON 输出</span>
+chm analyze . -n 1000              <span style="color:#94a3b8;"># 分析最近 1000 个提交</span></pre>
+        </section>
+
+        <section id="cmd-doctor" class="card">
+            <h3>🩺 chm doctor</h3>
+            <p style="font-size:.85rem;color:var(--text-muted);">智能诊断——分析所有维度，输出优先级排序的、可执行的改进建议。</p>
+            <pre style="background:#1e293b;color:#e2e8f0;padding:.75rem;border-radius:8px;font-size:.85rem;">chm doctor .</pre>
+        </section>
+
+        <section id="cmd-mcp" class="card">
+            <h3>🔌 chm mcp — AI Agent 集成</h3>
+            <p style="font-size:.85rem;color:var(--text-muted);">将 CHM 作为 MCP 服务器运行，AI 代理可以直接查询代码库健康度。</p>
+            <pre style="background:#1e293b;color:#e2e8f0;padding:.75rem;border-radius:8px;font-size:.85rem;">chm mcp                  <span style="color:#94a3b8;"># stdio 模式 (Claude Desktop)</span>
+chm mcp --http 8080      <span style="color:#94a3b8;"># HTTP 模式</span>
+claude mcp add chm -- chm mcp</pre>
+            <p style="font-size:.8rem;color:var(--text-muted);">12 个 MCP 工具 + 1 个资源</p>
+        </section>
+
+        <!-- SaaS API -->
+        <section id="api-auth" class="card">
+            <h3>🔐 API 认证</h3>
+            <pre style="background:#1e293b;color:#e2e8f0;padding:.75rem;border-radius:8px;font-size:.8rem;overflow-x:auto;">
+<span style="color:var(--yellow);">POST</span> /api/auth/register   <span style="color:#94a3b8;">{"email","password","name"}</span>
+<span style="color:var(--yellow);">POST</span> /api/auth/login      <span style="color:#94a3b8;">{"email","password"}</span>
+<span style="color:var(--green);">GET</span>  /api/auth/me          <span style="color:#94a3b8;">当前用户信息</span>
+<span style="color:var(--yellow);">POST</span> /api/auth/logout     </pre>
+        </section>
+
+        <section id="api-keys" class="card">
+            <h3>🔑 API Keys</h3>
+            <pre style="background:#1e293b;color:#e2e8f0;padding:.75rem;border-radius:8px;font-size:.8rem;">
+<span style="color:var(--green);">GET</span>    /api/keys            <span style="color:#94a3b8;">列出所有 Key</span>
+<span style="color:var(--yellow);">POST</span>   /api/keys            <span style="color:#94a3b8;">创建新 Key (返回一次!)</span>
+<span style="color:var(--red);">DELETE</span> /api/keys/:id        <span style="color:#94a3b8;">吊销 Key</span>
+
+<span style="color:#94a3b8;"># CLI 认证</span>
+chm login YOUR_API_KEY
+<span style="color:#94a3b8;"># 或环境变量</span>
+export CHM_API_KEY=chm_xxx</pre>
+        </section>
+    </main>
+</div>

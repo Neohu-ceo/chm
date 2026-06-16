@@ -3,6 +3,7 @@
 import sys
 import time
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import click
 
@@ -52,34 +53,38 @@ def analyze(path: str, report: str, output: str, max_commits: int):
     click.echo(f"🔍 Analyzing {click.style(collector.repo_name(), bold=True)}...")
     start_time = time.time()
 
-    # Run all analyzers
-    click.echo("  ├─ Collecting commit data...")
+    # Collect base data (must be sequential — shared git calls)
     total_commits = collector.total_commits()
     total_files = collector.total_files()
 
-    click.echo("  ├─ Analyzing hotspots...")
-    hotspots = HotspotAnalyzer(collector).analyze()
+    # Run all 8 analyzers in parallel
+    analyzers = {
+        "hotspots": lambda: HotspotAnalyzer(collector).analyze(),
+        "authors": lambda: AuthorAnalyzer(collector).analyze(),
+        "pulse": lambda: PulseAnalyzer(collector).analyze(),
+        "complexity": lambda: ComplexityAnalyzer(collector).analyze(),
+        "dead_code": lambda: DeadCodeAnalyzer(collector).analyze(),
+        "dependencies": lambda: DependencyAnalyzer(collector).analyze(),
+        "test_coverage": lambda: TestCoverageAnalyzer(collector).analyze(),
+        "duplication": lambda: DuplicationAnalyzer(collector).analyze(),
+    }
 
-    click.echo("  ├─ Analyzing authors...")
-    authors = AuthorAnalyzer(collector).analyze()
+    results_partial = {}
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        futures = {executor.submit(fn): name for name, fn in analyzers.items()}
+        for future in as_completed(futures):
+            name = futures[future]
+            click.echo(f"  ├─ {name}...")
+            results_partial[name] = future.result()
 
-    click.echo("  ├─ Analyzing team pulse...")
-    pulse = PulseAnalyzer(collector).analyze()
-
-    click.echo("  ├─ Analyzing complexity...")
-    complexity = ComplexityAnalyzer(collector).analyze()
-
-    click.echo("  ├─ Detecting dead code...")
-    dead_code = DeadCodeAnalyzer(collector).analyze()
-
-    click.echo("  ├─ Analyzing dependencies...")
-    dependencies = DependencyAnalyzer(collector).analyze()
-
-    click.echo("  ├─ Estimating test coverage...")
-    test_coverage = TestCoverageAnalyzer(collector).analyze()
-
-    click.echo("  ├─ Detecting duplication...")
-    duplication = DuplicationAnalyzer(collector).analyze()
+    hotspots = results_partial["hotspots"]
+    authors = results_partial["authors"]
+    pulse = results_partial["pulse"]
+    complexity = results_partial["complexity"]
+    dead_code = results_partial["dead_code"]
+    dependencies = results_partial["dependencies"]
+    test_coverage = results_partial["test_coverage"]
+    duplication = results_partial["duplication"]
 
     elapsed = time.time() - start_time
 

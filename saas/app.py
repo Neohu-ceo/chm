@@ -142,6 +142,15 @@ def settings_page():
     return _render_page("settings.html", title="设置 — Lighthouse Analytics", user=g.user)
 
 
+@app.route("/docs")
+def docs_page():
+    """Public documentation page."""
+    user = None
+    if session.get("user_id"):
+        user = models.get_user_by_id(session["user_id"])
+    return _render_page("docs.html", title="文档 — Lighthouse Analytics", user=user)
+
+
 @app.route("/repos")
 @login_required
 def repos_page():
