@@ -1,13 +1,13 @@
 {
   "name": "\u6233\u6233",
-  "level": 10,
-  "xp": 235,
-  "xp_to_next": 1050,
+  "level": 11,
+  "xp": 1085,
+  "xp_to_next": 1365,
   "stage": 3,
-  "hunger": 99.14372637000001,
+  "hunger": 98.025220415,
   "happiness": 100,
   "energy": 0,
-  "total_pokes": 294,
+  "total_pokes": 484,
   "total_feed": 20,
   "total_plays": 2,
   "total_sleeps": 1,
@@ -19,11 +19,11 @@
     "happy",
     "love"
   ],
-  "coins": 75,
+  "coins": 100,
   "accessories": [],
   "wearing": {},
   "quest_progress": {
-    "poke10": 294,
+    "poke10": 484,
     "feed5": 20,
     "play3": 2,
     "streak3": 1
@@ -37,7 +37,7 @@
   "species_id": "cat",
   "species_hatched_at": "2026-06-16T19:40:43.175883",
   "shiny": false,
-  "_last_decay": "2026-06-16T19:43:34.380083",
+  "_last_decay": "2026-06-16T19:47:18.081274",
   "_completed_quests": [
     "poke10",
     "feed5"

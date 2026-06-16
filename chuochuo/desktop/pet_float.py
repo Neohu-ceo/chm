@@ -140,19 +140,20 @@ class FloatPet:
     # ── Menu ─────────────────────────────────────────────────────
 
     def _make_menu(self):
-        m = tk.Menu(self.r, tearoff=0)
-        m.add_command(label="👆 戳一下 (+快乐)", command=self.poke)
-        m.add_command(label="🍔 喂食 (-10🪙 +饱腹)", command=self.feed)
-        m.add_command(label="🎮 小游戏 (赚XP!)", command=self._start_minigame)
-        m.add_command(label="💤 睡觉 (+体力)", command=self.sleep_pet)
-        m.add_separator()
-        m.add_command(label="🥚 领新蛋 (Lv.10解锁)", command=self._new_egg)
-        m.add_command(label="📊 状态面板", command=self._show_stats)
-        m.add_command(label="✏️ 改名", command=self._rename)
-        m.add_separator()
-        m.add_command(label="✕ 关闭", command=self._close)
-        self.c.bind("<Button-2>", lambda e: m.post(e.x_root, e.y_root))
-        self.c.bind("<Control-Button-1>", lambda e: m.post(e.x_root, e.y_root))
+        self._menu = tk.Menu(self.r, tearoff=0)
+        self._menu.add_command(label="👆 戳一下", command=self.poke)
+        self._menu.add_command(label="🍔 喂食 (-10🪙)", command=self.feed)
+        self._menu.add_command(label="🎮 小游戏 (赚XP!)", command=self._start_minigame)
+        self._menu.add_command(label="💤 睡觉", command=self.sleep_pet)
+        self._menu.add_separator()
+        self._menu.add_command(label="🥚 领新蛋 (Lv.10)", command=self._new_egg)
+        self._menu.add_command(label="📊 状态面板", command=self._show_stats)
+        self._menu.add_command(label="✏️ 改名", command=self._rename)
+        self._menu.add_separator()
+        self._menu.add_command(label="✕ 关闭", command=self._close)
+        self.c.bind("<Button-2>", lambda e: self._menu.post(e.x_root, e.y_root))
+        self.c.bind("<Button-3>", lambda e: self._menu.post(e.x_root, e.y_root))
+        self.c.bind("<Control-Button-1>", lambda e: self._menu.post(e.x_root, e.y_root))
 
     # ── Rendering ───────────────────────────────────────────────
 
