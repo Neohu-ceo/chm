@@ -1,437 +1,249 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>戳戳 — Desktop Pet</title>
+<!DOCTYPE html><html lang="zh-CN"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>戳戳 v2.0 — Desktop Pet</title>
 <style>
 :root {
-  --bg: #1a1a1a; --text: #e0d8d0; --muted: #888;
-  --accent: #ff6b35; --pink: #e8879a; --blue: #5b9bd5;
-  --green: #6baf6b; --yellow: #f0c040;
+  --bg:#1a1a1a; --card:#252525; --text:#e0d8d0; --muted:#888;
+  --accent:#ff6b35; --pink:#e8879a; --blue:#5b9bd5; --green:#6baf6b; --yellow:#f0c040;
 }
-* { margin:0; padding:0; box-sizing:border-box; }
-body {
-  font-family: 'PingFang SC',-apple-system,sans-serif;
-  background: var(--bg); color: var(--text);
-  display: flex; flex-direction: column; align-items: center;
-  min-height: 100vh; user-select: none;
-  -webkit-user-select: none; cursor: default;
-  overflow: hidden;
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'PingFang SC',-apple-system,sans-serif; background:var(--bg); color:var(--text);
+  display:flex; flex-direction:column; align-items:center; min-height:100vh;
+  user-select:none; -webkit-user-select:none; overflow:hidden;
 }
-
 /* Pet area */
-.pet-container {
-  flex: 1; display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  padding: 1rem; width: 100%;
+.pet-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0.5rem;width:100%}
+.pet{
+  display:grid;grid-template-columns:repeat(16,1fr);grid-template-rows:repeat(16,1fr);
+  width:min(240px,60vw);height:min(240px,60vw);gap:2px;cursor:pointer;transition:transform .1s;
 }
-
-/* The pixel pet — 16×16 grid */
-.pet {
-  display: grid;
-  grid-template-columns: repeat(16, 1fr);
-  grid-template-rows: repeat(16, 1fr);
-  width: min(280px, 70vw);
-  height: min(280px, 70vw);
-  gap: 2px;
-  transition: transform 0.1s;
-  cursor: pointer;
+.pet:active{transform:scale(.9)}
+.pet.bounce{animation:bounce .4s ease}.pet.spin{animation:spin .5s ease}.pet.shake{animation:shake .3s ease}
+@keyframes bounce{0%,100%{transform:translateY(0)}40%{transform:translateY(-20px)}60%{transform:translateY(-5px)}}
+@keyframes spin{0%{transform:rotate(0)scale(1)}50%{transform:rotate(10deg)scale(1.1)}100%{transform:rotate(0)scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.px{border-radius:3px;transition:background .3s}
+/* Info */
+.info{text-align:center;padding:.25rem}
+.name-row{display:flex;align-items:center;justify-content:center;gap:.3rem;font-size:1.1rem;font-weight:700}
+.lv{background:var(--accent);color:#fff;font-size:.65rem;padding:.1rem .4rem;border-radius:8px}
+.coins{font-size:.75rem;color:var(--yellow)}
+/* Stat bars */
+.bars{width:200px;margin:.3rem auto}
+.bar-row{display:flex;align-items:center;gap:.4rem;margin:.15rem 0;font-size:.65rem}
+.bar-row .icon{width:16px;text-align:center}
+.bar-row .label{width:20px;color:var(--muted)}
+.bar-bg{flex:1;height:5px;background:#333;border-radius:3px}
+.bar-fill{height:100%;border-radius:3px;transition:width .5s}
+.bar-fill.hunger{background:var(--accent)}.bar-fill.happy{background:var(--pink)}.bar-fill.energy{background:var(--blue)}
+/* XP */
+.xp-wrap{width:200px;height:3px;background:#333;border-radius:2px;margin:.3rem auto}
+.xp-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .5s}
+/* Actions */
+.actions{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;padding:.5rem}
+.btn{
+  padding:.45rem 1rem;border-radius:16px;border:none;font-size:.8rem;cursor:pointer;
+  transition:all .15s;background:#252525;color:var(--text);border:1px solid #333;
+  display:flex;align-items:center;gap:.3rem;
 }
-
-.pet:active { transform: scale(0.9); }
-
-.pet.bouncing { animation: bounce 0.4s ease; }
-.pet.spinning { animation: spin 0.5s ease; }
-.pet.shaking  { animation: shake 0.3s ease; }
-
-@keyframes bounce {
-  0%,100% { transform: translateY(0); }
-  40% { transform: translateY(-20px); }
-  60% { transform: translateY(-5px); }
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:active{transform:scale(.95)}
+.btn.accent{background:var(--accent);color:#fff;border:none}
+.btn.small{padding:.3rem .7rem;font-size:.7rem}
+/* Shop */
+.shop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:20;align-items:center;justify-content:center}
+.shop.open{display:flex}
+.shop-card{background:var(--card);border-radius:20px;padding:1.5rem;max-width:360px;width:90%;max-height:80vh;overflow-y:auto}
+.shop-card h3{margin-bottom:.75rem}
+.shop-item{display:flex;align-items:center;gap:.75rem;padding:.5rem;border-bottom:1px solid #222}
+.shop-item .icon{font-size:1.5rem}
+.shop-item .info{flex:1;text-align:left}
+.shop-item .name{font-size:.85rem}.shop-item .cost{font-size:.7rem;color:var(--muted)}
+/* Bubble */
+.bubble{
+  position:fixed;top:20%;left:50%;transform:translateX(-50%);
+  background:#333;color:var(--text);padding:.5rem 1rem;border-radius:16px;
+  font-size:.85rem;z-index:10;animation:floatUp 2s ease forwards;pointer-events:none;
 }
+@keyframes floatUp{0%{opacity:1;transform:translateX(-50%)translateY(0)}100%{opacity:0;transform:translateX(-50%)translateY(-60px)}}
+/* Streak */
+.fire{animation:flicker .5s infinite alternate}@keyframes flicker{from{opacity:.7}to{opacity:1}}
+/* Quests panel */
+.quests{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:20;align-items:center;justify-content:center}
+.quests.open{display:flex}
+.quest-card{background:var(--card);border-radius:20px;padding:1.5rem;max-width:360px;width:90%}
+.quest-item{padding:.4rem 0;border-bottom:1px solid #222;font-size:.8rem;display:flex;justify-content:space-between}
+.quest-item .prog{color:var(--accent)}
+</style></head><body>
 
-@keyframes spin {
-  0% { transform: rotate(0deg) scale(1); }
-  50% { transform: rotate(10deg) scale(1.1); }
-  100% { transform: rotate(0deg) scale(1); }
-}
-
-@keyframes shake {
-  0%,100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
-}
-
-/* Pixel block */
-.px {
-  border-radius: 3px;
-  transition: background 0.3s, transform 0.2s;
-}
-
-/* Info bar */
-.info-bar {
-  text-align: center; padding: 0.5rem;
-}
-
-.pet-name {
-  font-size: 1.3rem; font-weight: 700;
-  display: flex; align-items: center; justify-content: center; gap: 0.4rem;
-}
-
-.level-badge {
-  background: var(--accent); color: #fff;
-  font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 10px;
-}
-
-/* XP bar */
-.xp-bar-wrap {
-  width: 200px; height: 4px; background: #333; border-radius: 2px;
-  margin: 0.5rem auto;
-}
-.xp-bar-fill {
-  height: 100%; background: var(--accent); border-radius: 2px;
-  transition: width 0.5s;
-}
-
-/* Stats row */
-.stats-row {
-  display: flex; gap: 1.5rem; justify-content: center;
-  font-size: 0.8rem; color: var(--muted); margin-top: 0.25rem;
-}
-.stats-row span { color: var(--accent); font-weight: 600; }
-
-/* Message bubble */
-.bubble {
-  position: fixed; top: 15%; left: 50%; transform: translateX(-50%);
-  background: #333; color: var(--text); padding: 0.5rem 1rem;
-  border-radius: 16px; font-size: 0.9rem; z-index: 10;
-  animation: floatUp 2s ease forwards; pointer-events: none;
-  white-space: nowrap;
-}
-
-@keyframes floatUp {
-  0% { opacity: 1; transform: translateX(-50%) translateY(0); }
-  100% { opacity: 0; transform: translateX(-50%) translateY(-60px); }
-}
-
-/* Bottom bar */
-.bottom-bar {
-  width: 100%; padding: 0.75rem; border-top: 1px solid #222;
-  display: flex; justify-content: center; gap: 1rem;
-}
-
-.btn {
-  padding: 0.5rem 1.25rem; border-radius: 20px; border: none;
-  font-size: 0.85rem; cursor: pointer; transition: all 0.15s;
-  background: #252525; color: var(--text); border: 1px solid #333;
-}
-.btn:hover { border-color: var(--accent); color: var(--accent); }
-.btn:active { transform: scale(0.95); }
-.btn.accent { background: var(--accent); color: #fff; border: none; }
-
-/* Streak fire */
-.fire { animation: flicker 0.5s ease-in-out infinite alternate; }
-@keyframes flicker {
-  from { opacity: 0.7; transform: scale(1); }
-  to { opacity: 1; transform: scale(1.1); }
-}
-
-/* Emotion transition */
-.emotion-transition { transition: all 0.5s ease; }
-</style>
-</head>
-<body>
-
-<div class="pet-container" id="pet-container">
-  <!-- The pixel pet -->
+<div class="pet-wrap">
   <div class="pet" id="pet" onclick="poke()"></div>
-
-  <!-- Info -->
-  <div class="info-bar" style="margin-top:1rem;">
-    <div class="pet-name">
-      <span id="pet-name">戳戳</span>
-      <span class="level-badge" id="level-badge">Lv.1</span>
-      <span id="streak-fire" style="display:none;" class="fire">🔥</span>
+  <div class="info">
+    <div class="name-row">
+      <span id="name">戳戳</span><span class="lv" id="lv">Lv.1</span>
+      <span id="fire-icon" style="display:none" class="fire">🔥</span>
     </div>
-    <div class="xp-bar-wrap"><div class="xp-bar-fill" id="xp-bar" style="width:0%"></div></div>
-    <div class="stats-row">
-      <div>今日 <span id="today-pokes">0</span> 戳</div>
-      <div>总计 <span id="total-pokes">0</span> 戳</div>
-      <div id="streak-display"></div>
-    </div>
+    <div class="coins">🪙 <span id="coins">0</span></div>
   </div>
+  <div class="bars">
+    <div class="bar-row"><span class="icon">🍔</span><span class="label">饱</span><div class="bar-bg"><div class="bar-fill hunger" id="hunger-bar"></div></div></div>
+    <div class="bar-row"><span class="icon">😊</span><span class="label">乐</span><div class="bar-bg"><div class="bar-fill happy" id="happy-bar"></div></div></div>
+    <div class="bar-row"><span class="icon">⚡</span><span class="label">力</span><div class="bar-bg"><div class="bar-fill energy" id="energy-bar"></div></div></div>
+  </div>
+  <div class="xp-wrap"><div class="xp-fill" id="xp-bar"></div></div>
+  <div style="font-size:.65rem;color:var(--muted);margin-top:.15rem" id="stage-info">蛋</div>
 </div>
 
-<div class="bottom-bar">
-  <button class="btn" onclick="renamePet()">✏️ 改名</button>
-  <button class="btn accent" onclick="poke()">🖐️ 戳一下</button>
-  <button class="btn" onclick="toggleInfo()">📊 详情</button>
+<div class="actions">
+  <button class="btn accent" onclick="poke()">👆 戳</button>
+  <button class="btn" onclick="feed()">🍔 喂</button>
+  <button class="btn" onclick="playGame()">🎮 玩</button>
+  <button class="btn" onclick="sleepPet()">💤 睡</button>
+  <button class="btn small" onclick="openShop()">🛍️</button>
+  <button class="btn small" onclick="openQuests()">📋</button>
+  <button class="btn small" onclick="renamePet()">✏️</button>
 </div>
+
+<!-- Shop -->
+<div class="shop" id="shop"><div class="shop-card">
+  <h3>🛍️ 配饰商店 <button class="btn small" onclick="closeShop()" style="float:right">✕</button></h3>
+  <div id="shop-items"></div>
+</div></div>
+
+<!-- Quests -->
+<div class="quests" id="quests"><div class="quest-card">
+  <h3>📋 每日任务 <button class="btn small" onclick="closeQuests()" style="float:right">✕</button></h3>
+  <div id="quest-items"></div>
+  <div style="margin-top:.75rem"><strong>🏆 成就:</strong> <span id="ach-list"></span></div>
+</div></div>
 
 <script>
-const API = 'http://localhost:5200';
+const A=location.origin.replace('5200','5200');
+let S={},emotion='happy';
 
-// ── Emotion Pixel Maps (16×16) ────────────────────────────────
+const MAPS={happy:`
+........########......##......##.....##........##....##..##..##..##...#.............#...#..##....##..#...#....####....#...#.............#...#..#......#..#....#..........#.....##..##..##.......##....##........#......#.......#........#......##..##..##........######.....`,
+sleepy:`................................########.....##......##.....##........##....#..........#....#...####...#....#..........#....#..........#....#..........#.....#...##...#......#......#.......#....#........#..#.........##....................`,
+excited:`
+....########....##......##...##........##..##..##..##..##..#..##....##..#..#............#..#....####....#..#...#....#...#..#..##....##..#..#..#......#..#..##..........##...##........##.....##..##..##.......##....##........#....#.......####......`,
+love:`
+................##........##..####......####..######..######..############..##########.....########.......######........####..........##...........##...........##...........##...........##..........##.##........##...##.......##.....##.....`,
+hungry:`
+.....######.......##....##......##......##.....##........##....##..##..##..##..#..##....##..#..#............#..#...######...#..#............#..#..##....##..#..##..........##...##........##.....##..##..##.......##....##.......#..##..#........##..##.....`,
+surprised:`
+....########....##......##...##........##..##..........##..#..##....##..#..#..##....##..#..#............#..#.....####...#..#....#....#..#..#....#....#..#..##..........##...##..####..##....##......##......########......................`};
 
-const EMOTIONS = {
-  happy: `
-    ........########..
-    ......##......##..
-    .....##........##.
-    ....##..##..##..##
-    ...#.............#
-    ...#..##....##..#.
-    ...#....####....#.
-    ...#.............#
-    ...#..#......#..#.
-    ....#..........#..
-    .....##..##..##...
-    ......##....##....
-    .......#......#...
-    ......#........#..
-    .....##..##..##...
-    .......######.....
-  `,
-
-  sleepy: `
-    ................
-    ................
-    ....########....
-    ...##......##...
-    ..##........##..
-    ..#..........#..
-    ..#...####...#..
-    ..#..........#..
-    ..#..........#..
-    ..#..........#..
-    ...#...##...#...
-    ....#......#....
-    .....#....#.....
-    ......#..#......
-    .......##.......
-    ................
-  `,
-
-  surprised: `
-    ....########....
-    ...##......##...
-    ..##........##..
-    .##..........##.
-    .#..##....##..#.
-    .#..##....##..#.
-    .#............#.
-    .#.....####...#.
-    .#....#....#..#.
-    .#....#....#..#.
-    .##..........##.
-    ..##..####..##..
-    ...##......##...
-    ....########....
-    ................
-    ................
-  `,
-
-  love: `
-    ................
-    ..##........##..
-    .####......####.
-    .######..######.
-    .############..
-    ..##########...
-    ...########....
-    ....######.....
-    .....####......
-    ......##.......
-    ......##.......
-    ......##.......
-    ......##.......
-    .....##.##.....
-    ....##...##....
-    ...##.....##...
-  `,
-
-  excited: `
-    ....########....
-    ...##......##...
-    ..##........##..
-    .##..##..##..##.
-    .#..##....##..#.
-    .#............#.
-    .#....####....#.
-    .#...#....#...#.
-    .#..##....##..#.
-    .#..#......#..#.
-    .##..........##.
-    ..##........##..
-    ...##..##..##...
-    ....##....##....
-    .....#....#.....
-    ......####......
-  `,
-
-  hungry: `
-    .....######.....
-    ....##....##....
-    ...##......##...
-    ..##........##..
-    .##..##..##..##.
-    .#..##....##..#.
-    .#............#.
-    .#...######...#.
-    .#............#.
-    .#..##....##..#.
-    .##..........##.
-    ..##........##..
-    ...##..##..##...
-    ....##....##....
-    ....#..##..#....
-    .....##..##.....
-  `,
-};
-
-// ── Render ─────────────────────────────────────────────────────
-
-let currentEmotion = 'happy';
-let petName = '戳戳';
-let stats = {};
-
-function renderPet(emotion) {
-  currentEmotion = emotion;
-  const map = (EMOTIONS[emotion] || EMOTIONS.happy).trim().split('\n').map(l => l.trim());
-  const pet = document.getElementById('pet');
-  pet.innerHTML = '';
-
-  const colors = {
-    '#': getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#ff6b35',
-    '.': 'transparent',
-  };
-
-  for (let row = 0; row < 16; row++) {
-    for (let col = 0; col < 16; col++) {
-      const char = (map[row] || '')[col] || '.';
-      const px = document.createElement('div');
-      px.className = 'px';
-      px.style.background = char === '#' ? colors['#'] : 'transparent';
-
-      // Add subtle animation for certain pixels
-      if (char === '#' && emotion === 'excited' && Math.random() < 0.1) {
-        px.style.animation = 'flicker 0.3s ease infinite alternate';
-      }
-
-      pet.appendChild(px);
-    }
+function render(e){
+  emotion=e; const m=(MAPS[e]||MAPS.happy).trim().split('\n').map(l=>l.trim());
+  const pet=document.getElementById('pet'); pet.innerHTML='';
+  const colors={'#':getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#ff6b35','.':'transparent'};
+  for(let r=0;r<16;r++)for(let c=0;c<16;c++){
+    const ch=(m[r]||'')[c]||'.'; const px=document.createElement('div');
+    px.className='px'; px.style.background=ch==='#'?colors['#']:'transparent';
+    pet.appendChild(px);
   }
 }
 
-// ── Interactions ───────────────────────────────────────────────
-
-async function poke() {
-  const pet = document.getElementById('pet');
-  const reactions = ['bouncing', 'spinning', 'shaking'];
-  const anim = reactions[Math.floor(Math.random() * reactions.length)];
-  pet.classList.add(anim);
-  setTimeout(() => pet.classList.remove(anim), 500);
-
-  try {
-    const r = await fetch(API+'/api/poke', {method:'POST'});
-    const d = await r.json();
-    showBubble(d.message || '嘿嘿~');
-    currentEmotion = d.reaction;
-    renderPet(d.reaction);
-    await loadStats();
-    checkEvolution();
-  } catch(e) {
-    showBubble('服务器没连上~');
-  }
+async function api(path,method='GET',body=null){
+  const o={method,headers:{'Content-Type':'application/json'}};
+  if(body)o.body=JSON.stringify(body);
+  const r=await fetch(A+path,o); return r.json();
 }
 
-function showBubble(msg) {
-  const b = document.createElement('div');
-  b.className = 'bubble'; b.textContent = msg;
-  document.body.appendChild(b);
-  setTimeout(() => b.remove(), 2200);
+async function load(){
+  S=await api('/api/state');
+  document.getElementById('name').textContent=S.name;
+  document.getElementById('lv').textContent='Lv.'+S.level;
+  document.getElementById('coins').textContent=S.coins;
+  document.getElementById('hunger-bar').style.width=S.hunger+'%';
+  document.getElementById('happy-bar').style.width=S.happiness+'%';
+  document.getElementById('energy-bar').style.width=S.energy+'%';
+  document.getElementById('xp-bar').style.width=(S.xp/S.xp_to_next*100)+'%';
+  document.getElementById('stage-info').textContent=S.stage_name;
+  document.getElementById('fire-icon').style.display=S.streak_days>=3?'inline':'none';
+  if(!MAPS[emotion]||S.emotion!==emotion) render(S.emotion||'happy');
 }
 
-async function loadStats() {
-  try {
-    const r = await fetch(API+'/api/stats');
-    stats = await r.json();
-    document.getElementById('pet-name').textContent = petName;
-    document.getElementById('level-badge').textContent = 'Lv.'+stats.level;
-    document.getElementById('xp-bar').style.width = (stats.xp/stats.xp_to_next*100)+'%';
-    document.getElementById('today-pokes').textContent = stats.pokes_today;
-    document.getElementById('total-pokes').textContent = stats.total_pokes;
-
-    if (stats.streak_days >= 3) {
-      const fire = document.getElementById('streak-fire');
-      fire.style.display = 'inline';
-      document.getElementById('streak-display').innerHTML = '<span style="color:var(--accent);">🔥 '+stats.streak_days+'天</span>';
-    } else if (stats.streak_days > 0) {
-      document.getElementById('streak-display').textContent = '🔥 '+stats.streak_days+'天';
-    }
-
-    // Time-based emotion
-    if (!currentEmotion || currentEmotion === stats.emotion) {
-      renderPet(stats.time_emotion || stats.emotion || 'happy');
-    }
-  } catch(e) {}
+async function poke(){
+  const p=document.getElementById('pet');
+  p.classList.add(['bounce','spin','shake'][Math.floor(Math.random()*3)]);
+  setTimeout(()=>p.classList.remove('bounce','spin','shake'),500);
+  const d=await api('/api/poke','POST'); showBubble(d.message);
+  if(d.quests_done?.length) showBubble('✅ '+d.quests_done.join(', '));
+  if(d.achievements_new?.length) showBubble('🏆 '+d.achievements_new[0]);
+  render(d.reaction); await load();
 }
 
-async function renamePet() {
-  const name = prompt('给你的戳戳起个名字:', petName);
-  if (!name) return;
-  petName = name;
-  try {
-    await fetch(API+'/api/rename', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({name})
-    });
-    document.getElementById('pet-name').textContent = name;
-    showBubble('我叫'+name+'！');
-  } catch(e) {}
+async function feed(){
+  const d=await api('/api/feed','POST');
+  if(d.error){showBubble(d.error);return}
+  showBubble(d.message); render(d.reaction); await load();
 }
 
-function toggleInfo() {
-  const msg = `🖐️ ${petName} · Lv.${stats.level}
-───────────────
-📊 经验: ${stats.xp}/${stats.xp_to_next}
-🔥 连续: ${stats.streak_days}天
-👆 总戳: ${stats.total_pokes}
-📅 今日: ${stats.pokes_today}
-
-每戳一次 +10XP
-连续 7 天解锁新表情！`;
-  showBubble(msg.replace(/\n/g,' · '));
+async function playGame(){
+  const d=await api('/api/play','POST');
+  showBubble(d.message); render(d.reaction); await load();
 }
 
-async function checkEvolution() {
-  if (stats.level >= 10) {
-    try {
-      const r = await fetch(API+'/api/evolve', {method:'POST'});
-      const d = await r.json();
-      if (d.evolved) showBubble(d.message);
-    } catch(e) {}
-  }
+async function sleepPet(){
+  const d=await api('/api/sleep','POST');
+  showBubble(d.message); render(d.reaction); await load();
 }
 
-// ── Init ───────────────────────────────────────────────────────
+async function renamePet(){
+  const n=prompt('名字:',S.name); if(!n)return;
+  await api('/api/rename','POST',{name:n}); S.name=n;
+  document.getElementById('name').textContent=n; showBubble('我叫'+n+'！');
+}
 
-setInterval(loadStats, 10000);  // Poll every 10s
-renderPet('happy');
-loadStats();
+async function openShop(){
+  document.getElementById('shop').classList.add('open');
+  const items=[
+    {id:'hat_cowboy',name:'牛仔帽',icon:'🤠',cost:200},
+    {id:'hat_crown',name:'皇冠',icon:'👑',cost:500},
+    {id:'glasses_cool',name:'墨镜',icon:'😎',cost:300},
+    {id:'bow_tie',name:'领结',icon:'🎀',cost:150},
+    {id:'cat_ears',name:'猫耳',icon:'🐱',cost:400},
+  ];
+  document.getElementById('shop-items').innerHTML=items.map(i=>`
+    <div class="shop-item">
+      <span class="icon">${i.icon}</span>
+      <div class="info"><div class="name">${i.name}</div><div class="cost">🪙 ${i.cost}</div></div>
+      <button class="btn small ${S.accessories?.includes(i.id)?'':'accent'}" onclick="buy('${i.id}')">${S.accessories?.includes(i.id)?'已拥有':'购买'}</button>
+    </div>
+  `).join('');
+}
 
-// Idle animations — occasionally change emotion
-setInterval(() => {
-  if (document.hidden) return;
-  const emotions = Object.keys(EMOTIONS);
-  // Bias towards time-of-day emotion
-  const h = new Date().getHours();
-  const bias = (6<=h&&h<12) ? 'happy' : (14<=h&&h<16) ? 'sleepy' : (16<=h&&h<18) ? 'excited' : 'happy';
-  const emotion = Math.random() < 0.5 ? bias : emotions[Math.floor(Math.random()*emotions.length)];
-  if (document.visibilityState === 'visible') renderPet(emotion);
-}, 30000);
-</script>
-</body>
-</html>
+function closeShop(){document.getElementById('shop').classList.remove('open')}
+
+async function buy(id){
+  const d=await api('/api/buy','POST',{accessory_id:id});
+  if(d.error) showBubble(d.error);
+  else{showBubble('✅ 获得 '+d.bought); await load(); openShop();}
+}
+
+async function openQuests(){
+  document.getElementById('quests').classList.add('open');
+  const s=await api('/api/state');
+  document.getElementById('quest-items').innerHTML=(s.quests||[]).map(q=>`
+    <div class="quest-item">
+      <span>${q.name}: ${q.desc}</span>
+      <span class="prog">${q.progress}/${q.target} (+${q.reward_xp}XP)</span>
+    </div>
+  `).join('');
+  document.getElementById('ach-list').textContent=(s.achievements||[]).map(id=>{
+    const names={first_poke:'👆初见',poke_100:'💯百戳',poke_1000:'👑千戳',level_5:'⭐Lv5',level_10:'✨Lv10',streak_7:'🔥7天',all_care:'🏆全能'};
+    return names[id]||id;
+  }).join(' ');
+}
+
+function closeQuests(){document.getElementById('quests').classList.remove('open')}
+
+function showBubble(m){
+  const b=document.createElement('div');b.className='bubble';b.textContent=m;
+  document.body.appendChild(b);setTimeout(()=>b.remove(),2200);
+}
+
+render('happy');load();setInterval(load,15000);
+</script></body></html>

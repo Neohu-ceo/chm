@@ -1,0 +1,37 @@
+{
+  "name": "\u6233\u6233",
+  "level": 3,
+  "xp": 120,
+  "xp_to_next": 169,
+  "stage": 1,
+  "hunger": 90,
+  "happiness": 100,
+  "energy": 50,
+  "total_pokes": 26,
+  "total_feed": 1,
+  "total_plays": 1,
+  "total_sleeps": 1,
+  "streak_days": 1,
+  "last_active_date": "2026-06-16",
+  "hatched_at": "2026-06-16T19:09:44.573311",
+  "emotion": "excited",
+  "unlocked_emotions": [
+    "happy"
+  ],
+  "coins": 90,
+  "accessories": [],
+  "wearing": {},
+  "quest_progress": {
+    "poke10": 26,
+    "feed5": 1,
+    "play3": 1,
+    "streak3": 1
+  },
+  "achievements": [
+    "first_poke"
+  ],
+  "_last_decay": "2026-06-16T19:09:46.504249",
+  "_completed_quests": [
+    "poke10"
+  ]
+}

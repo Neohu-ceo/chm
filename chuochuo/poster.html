@@ -1,0 +1,148 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1200"><title>戳戳 — 桌面宠物</title><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'PingFang SC','Noto Sans SC',-apple-system,sans-serif;background:#0d0d0d;display:flex;justify-content:center;padding:2rem}
+.poster{width:800px;height:1132px;background:linear-gradient(180deg,#1a1410 0%,#1a1a1a 30%,#1a1a1a 70%,#1a1410 100%);color:#e0d8d0;position:relative;overflow:hidden}
+
+/* Background grid */
+.grid-bg{position:absolute;inset:0;background-image:radial-gradient(circle,#222 1px,transparent 1px);background-size:20px 20px;opacity:.3}
+
+/* Glow */
+.glow{position:absolute;top:20%;left:50%;transform:translateX(-50%);width:400px;height:400px;background:radial-gradient(circle,rgba(255,107,53,.15)0%,transparent 70%);border-radius:50%}
+
+/* Pixel pet — large */
+.pet-large{position:absolute;top:180px;left:50%;transform:translateX(-50%);display:grid;grid-template-columns:repeat(16,1fr);grid-template-rows:repeat(16,1fr);width:200px;height:200px;gap:3px;z-index:2}
+.pet-large .px{border-radius:4px}
+
+/* Header */
+.header{position:relative;z-index:3;text-align:center;padding-top:60px}
+.header .logo{font-size:5rem;font-weight:900;letter-spacing:-.03em;line-height:1}
+.header .logo .orange{color:#ff6b35}
+.header .tagline{font-size:1.3rem;color:#888;margin-top:.5rem;letter-spacing:.1em}
+
+/* Features grid */
+.features{position:relative;z-index:3;display:grid;grid-template-columns:1fr 1fr;gap:2rem;padding:0 80px;margin-top:440px}
+.feature{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:1.5rem;text-align:center}
+.feature .icon{font-size:2rem;margin-bottom:.5rem}
+.feature h3{font-size:1rem;font-weight:700;margin-bottom:.35rem}
+.feature p{font-size:.8rem;color:#888;line-height:1.6}
+
+/* CTA */
+.cta{position:relative;z-index:3;text-align:center;margin-top:60px}
+.cta .install{display:inline-block;background:#ff6b35;color:#fff;padding:.8rem 2.5rem;border-radius:24px;font-size:1.1rem;font-weight:700;text-decoration:none;letter-spacing:.05em}
+.cta .url{display:block;color:#666;font-size:.8rem;margin-top:1rem;font-family:monospace}
+
+/* Stats row */
+.stats{position:relative;z-index:3;display:flex;gap:3rem;justify-content:center;margin-top:40px}
+.stat{text-align:center}
+.stat .val{font-size:1.8rem;font-weight:800;color:#ff6b35}
+.stat .lbl{font-size:.75rem;color:#666;margin-top:.2rem}
+
+/* QR placeholder */
+.qr{position:relative;z-index:3;text-align:center;margin-top:30px;color:#555;font-size:.7rem}
+
+/* Badge */
+.badge-row{position:relative;z-index:3;text-align:center;margin-top:40px;display:flex;justify-content:center;gap:1rem}
+.badge-tag{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:.3rem 1rem;font-size:.75rem;color:#888}
+
+footer{position:absolute;bottom:30px;width:100%;text-align:center;z-index:3;color:#333;font-size:.7rem}
+
+@media(max-width:800px){.poster{width:100%;height:auto}.features{padding:0 20px;margin-top:300px}}
+</style></head><body>
+<div class="poster">
+  <div class="grid-bg"></div>
+  <div class="glow"></div>
+
+  <!-- Large pet -->
+  <div class="pet-large" id="poster-pet"></div>
+
+  <!-- Header -->
+  <div class="header">
+    <h1 class="logo">戳<span class="orange">戳</span></h1>
+    <p class="tagline">桌面像素宠物 · 陪你上班</p>
+  </div>
+
+  <!-- Features -->
+  <div class="features">
+    <div class="feature">
+      <div class="icon">👆</div><h3>戳击互动</h3>
+      <p>无聊了就戳它。6 种表情、4 种动画反馈、飘飘对话气泡——每一戳都有回应。</p>
+    </div>
+    <div class="feature">
+      <div class="icon">🍔</div><h3>喂养系统</h3>
+      <p>饥饿·快乐·体力三维属性。需要投喂、玩耍、哄睡——它真的会饿、会困、会不开心。</p>
+    </div>
+    <div class="feature">
+      <div class="icon">📈</div><h3>升级进化</h3>
+      <p>戳戳攒 XP 升级。Lv.5 成年、Lv.10 完全体。解锁新表情、新配饰、新互动。</p>
+    </div>
+    <div class="feature">
+      <div class="icon">🔥</div><h3>每日打卡</h3>
+      <p>连续登录攒连胜。4 个每日任务、7 个隐藏成就。看看你能坚持多少天。</p>
+    </div>
+    <div class="feature">
+      <div class="icon">🛍️</div><h3>配饰商店</h3>
+      <p>金币买帽子、墨镜、猫耳。装扮你的戳戳，让它独一无二。</p>
+    </div>
+    <div class="feature">
+      <div class="icon">💻</div><h3>零依赖</h3>
+      <p>Python 标准库即可运行。开源、本地、隐私——你的数据就留在你的电脑里。</p>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat"><div class="val">6</div><div class="lbl">表情</div></div>
+    <div class="stat"><div class="val">5</div><div class="lbl">互动方式</div></div>
+    <div class="stat"><div class="val">7</div><div class="lbl">隐藏成就</div></div>
+    <div class="stat"><div class="val">0</div><div class="lbl">外部依赖</div></div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta">
+    <a href="https://github.com/Neohu-ceo/chm" class="install" target="_blank">🐙 GitHub 开源</a>
+    <span class="url">github.com/Neohu-ceo/chm → chuochuo/desktop/</span>
+  </div>
+
+  <!-- Badges -->
+  <div class="badge-row">
+    <span class="badge-tag">🐍 Python</span>
+    <span class="badge-tag">🖥️ Desktop</span>
+    <span class="badge-tag">🎮 养成</span>
+    <span class="badge-tag">🔓 开源</span>
+    <span class="badge-tag">🆓 免费</span>
+  </div>
+
+  <footer>🖐️ 戳戳 ChuoChuo v2.0 · Lighthouse Analytics · 2026</footer>
+</div>
+
+<script>
+// Render the poster pet
+const pattern = `
+........########..
+......##......##..
+.....##........##.
+....##..##..##..##
+...#.............#
+...#..##....##..#.
+...#....####....#.
+...#.............#
+...#..#......#..#.
+....#..........#..
+.....##..##..##...
+......##....##....
+.......#......#...
+......#........#..
+.....##..##..##...
+.......######.....
+`.trim().split('\n').map(l=>l.trim());
+
+const pet = document.getElementById('poster-pet');
+for(let r=0;r<16;r++)for(let c=0;c<16;c++){
+  const ch=(pattern[r]||'')[c]||'.';
+  const px=document.createElement('div');
+  px.className='px';
+  px.style.background=ch==='#'?'#ff6b35':'transparent';
+  pet.appendChild(px);
+}
+</script>
+</body></html>
