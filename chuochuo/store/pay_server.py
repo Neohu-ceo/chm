@@ -38,9 +38,9 @@ class StoreHandler(BaseHTTPRequestHandler):
         elif self.path == "/api/stats":
             conn = sqlite3.connect(str(DB_PATH))
             count = conn.execute("SELECT COUNT(*) FROM purchases WHERE status='paid'").fetchone()[0]
-            revenue = conn.execute("SELECT COALESCE(SUM(amount),0) FROM purchases WHERE status='paid'").fetchone()[0]
+            revenue_fen = conn.execute("SELECT COALESCE(SUM(amount),0) FROM purchases WHERE status='paid'").fetchone()[0]
             conn.close()
-            self._json({"total_sales": count, "total_revenue": revenue})
+            self._json({"total_sales": count, "total_revenue_yuan": round(revenue_fen / 100, 2)})
         elif self.path.startswith("/download"):
             self.send_response(302)
             self.send_header("Location", "/chuochuo/desktop/pet_float.py")
@@ -53,7 +53,7 @@ class StoreHandler(BaseHTTPRequestHandler):
             body = self._body()
             try:
                 session = stripe.checkout.Session.create(
-                    payment_method_types=["card"],
+                    payment_method_types=["card", "alipay"],
                     line_items=[{
                         "price_data": {
                             "currency": body.get("currency", "cny"),
