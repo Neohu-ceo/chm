@@ -429,10 +429,10 @@ PLANS = {
 
 
 def get_subscription(user_id: str) -> dict | None:
-    """Get current subscription for a user."""
+    """Get current subscription for a user (active or trialing)."""
     with db_session() as db:
         row = db.execute(
-            "SELECT * FROM subscriptions WHERE user_id = ? AND status = 'active' ORDER BY started_at DESC LIMIT 1",
+            "SELECT * FROM subscriptions WHERE user_id = ? AND status IN ('active', 'trialing') ORDER BY started_at DESC LIMIT 1",
             (user_id,)
         ).fetchone()
         if row:
@@ -450,7 +450,7 @@ def change_plan(user_id: str, new_plan: str, payment_provider: str = None) -> di
     with db_session() as db:
         # Deactivate current subscription
         db.execute(
-            "UPDATE subscriptions SET status = 'inactive', canceled_at = CURRENT_TIMESTAMP WHERE user_id = ? AND status = 'active'",
+            "UPDATE subscriptions SET status = 'inactive', canceled_at = CURRENT_TIMESTAMP WHERE user_id = ? AND status IN ('active', 'trialing')",
             (user_id,)
         )
 
@@ -578,6 +578,83 @@ def get_usage_stats(user_id: str, days: int = 30) -> dict:
             f"analyses_last_{days}_days": recent,
             "unique_repos": unique_repos,
         }
+
+
+# ── Trial Management ───────────────────────────────────────────
+
+def start_trial(user_id: str, plan: str = "pro", days: int = 14) -> dict:
+    """Start a free trial for a paid plan."""
+    sub_id = str(uuid.uuid4())
+    now = datetime.now()
+    trial_end = now + timedelta(days=days)
+
+    with db_session() as db:
+        # Deactivate current free sub
+        db.execute(
+            "UPDATE subscriptions SET status = 'inactive' WHERE user_id = ? AND status = 'active'",
+            (user_id,)
+        )
+        # Create trial subscription
+        db.execute(
+            """INSERT INTO subscriptions (id, user_id, plan, status, started_at,
+               current_period_start, current_period_end)
+               VALUES (?, ?, ?, 'trialing', ?, ?, ?)""",
+            (sub_id, user_id, plan, now.isoformat(), now.isoformat(), trial_end.isoformat())
+        )
+    return get_subscription(user_id)
+
+
+def get_trial_status(user_id: str) -> dict:
+    """Get trial status for a user. Returns days_left, is_active, etc."""
+    sub = get_subscription(user_id)
+    if not sub or sub.get("status") != "trialing":
+        return {"in_trial": False, "days_left": 0, "plan": sub.get("plan", "free") if sub else "free"}
+
+    end_str = sub.get("current_period_end")
+    if not end_str:
+        return {"in_trial": False, "days_left": 0}
+
+    try:
+        end = datetime.fromisoformat(end_str)
+        days_left = (end - datetime.now()).days
+    except (ValueError, TypeError):
+        return {"in_trial": False, "days_left": 0}
+
+    return {
+        "in_trial": days_left > 0,
+        "expired": days_left <= 0,
+        "days_left": max(0, days_left),
+        "plan": sub["plan"],
+        "ends_at": end_str,
+        "should_upgrade": days_left <= 3,
+    }
+
+
+def expire_trial(user_id: str) -> bool:
+    """Expire a trial and downgrade to free."""
+    sub = get_subscription(user_id)
+    if not sub or sub.get("status") != "trialing":
+        return False
+
+    change_plan(user_id, "free")
+    return True
+
+
+def get_trials_ending_soon(days: int = 3) -> list[dict]:
+    """Get all trials ending within N days (for reminder emails)."""
+    cutoff = (datetime.now() + timedelta(days=days)).isoformat()
+    now = datetime.now().isoformat()
+
+    with db_session() as db:
+        rows = db.execute(
+            """SELECT s.*, u.email, u.name FROM subscriptions s
+               JOIN users u ON s.user_id = u.id
+               WHERE s.status = 'trialing'
+               AND s.current_period_end BETWEEN ? AND ?
+               ORDER BY s.current_period_end""",
+            (now, cutoff)
+        ).fetchall()
+        return [dict(r) for r in rows]
 
 
 # ── Dashboard ───────────────────────────────────────────────────

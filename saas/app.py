@@ -249,6 +249,36 @@ def api_revoke_key(key_id: str):
     return jsonify({"error": "Key not found"}), 404
 
 
+# ── Trial Endpoints ────────────────────────────────────────────
+
+@app.route("/api/trial/start", methods=["POST"])
+@login_required
+def api_start_trial():
+    """Start a 14-day free trial of Pro."""
+    data = request.get_json() or {}
+    plan = data.get("plan", "pro")
+
+    # Check if already had a trial
+    with models.db_session() as db:
+        prev = db.execute(
+            "SELECT COUNT(*) as c FROM subscriptions WHERE user_id = ? AND status = 'trialing'",
+            (g.user["id"],)
+        ).fetchone()
+        if prev["c"] > 0:
+            return jsonify({"error": "你已经使用过免费试用"}), 400
+
+    sub = models.start_trial(g.user["id"], plan)
+    return jsonify({"success": True, "subscription": sub})
+
+
+@app.route("/api/trial/status")
+@login_required
+def api_trial_status():
+    """Get trial status for the current user."""
+    status = models.get_trial_status(g.user["id"])
+    return jsonify(status)
+
+
 # ── Subscription Endpoints ─────────────────────────────────────
 
 @app.route("/api/subscription")
