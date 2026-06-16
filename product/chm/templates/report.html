@@ -195,6 +195,28 @@
         </div>
     </div>
 
+    <!-- New dimensions (v0.3.0) -->
+    <div class="grid">
+        <div class="card">
+            <h3><span class="emoji-icon">💀</span> 死代码检测</h3>
+            <div id="deadcode-content"></div>
+        </div>
+        <div class="card">
+            <h3><span class="emoji-icon">🧪</span> 测试覆盖率</h3>
+            <div id="coverage-content"></div>
+        </div>
+    </div>
+    <div class="grid">
+        <div class="card">
+            <h3><span class="emoji-icon">🔗</span> 依赖分析</h3>
+            <div id="deps-content"></div>
+        </div>
+        <div class="card">
+            <h3><span class="emoji-icon">📋</span> 重复代码</h3>
+            <div id="dupes-content"></div>
+        </div>
+    </div>
+
     <!-- Risk alerts -->
     <div class="grid">
         <div class="card full" id="alerts-card">
@@ -283,6 +305,79 @@
     }
     document.getElementById('complexity-content').innerHTML = compHTML;
 
+    // Dead code
+    const deadcode = data.dead_code || {};
+    let dcHTML = '';
+    if (deadcode.total_stale > 0 || deadcode.total_never_touched > 0) {
+        dcHTML += `<div class="metric-row">`;
+        dcHTML += `<div class="metric"><div class="value" style="color:var(--red);">${deadcode.total_stale || 0}</div><div class="unit">长期未修改</div></div>`;
+        dcHTML += `<div class="metric"><div class="value">${deadcode.total_never_touched || 0}</div><div class="unit">从未出现</div></div>`;
+        dcHTML += `<div class="metric"><div class="value">${((deadcode.staleness_ratio || 0) * 100).toFixed(0)}%</div><div class="unit">僵化比例</div></div>`;
+        dcHTML += `</div>`;
+        const vstale = deadcode.very_stale_files || [];
+        if (vstale.length > 0) {
+            dcHTML += '<p style="font-size:.85rem;color:var(--red);">⚠️ 一年以上未修改:</p><ul style="font-size:.8rem;padding-left:1.2rem;">';
+            vstale.slice(0,5).forEach(f => { dcHTML += `<li>${f.file} <span class="tag tag-red">${f.months_stale}个月</span></li>`; });
+            dcHTML += '</ul>';
+        }
+    } else {
+        dcHTML = '<p style="color:var(--text-muted);">✅ 未发现长期未修改的死代码</p>';
+    }
+    document.getElementById('deadcode-content').innerHTML = dcHTML;
+
+    // Test coverage
+    const cov = data.test_coverage || {};
+    const grade = cov.coverage_grade || '?';
+    const gradeColor = ['A','B'].includes(grade) ? 'var(--green)' : grade === 'C' ? 'var(--yellow)' : 'var(--red)';
+    let covHTML = `<div style="text-align:center;margin-bottom:.5rem;"><span style="font-size:2.5rem;font-weight:800;color:${gradeColor};">${grade}</span><br><span style="font-size:.85rem;">${cov.estimated_coverage_pct || 0}% 估算覆盖率</span></div>`;
+    covHTML += `<div class="metric-row">`;
+    covHTML += `<div class="metric"><div class="val">${cov.total_source_files || 0}</div><div class="lbl">源文件</div></div>`;
+    covHTML += `<div class="metric"><div class="val">${cov.total_test_files || 0}</div><div class="lbl">测试文件</div></div>`;
+    covHTML += `<div class="metric"><div class="val">${cov.uncovered_files || 0}</div><div class="lbl">未覆盖</div></div>`;
+    covHTML += `</div>`;
+    const hiRisk = (cov.high_risk_uncovered || []).filter(f => f.churn > 30);
+    if (hiRisk.length > 0) {
+        covHTML += '<p style="font-size:.8rem;color:var(--red);">🚨 高流失无测试文件:</p><ul style="font-size:.75rem;padding-left:1.2rem;">';
+        hiRisk.slice(0,5).forEach(f => { covHTML += `<li>${f.file} (${f.churn} churn)</li>`; });
+        covHTML += '</ul>';
+    }
+    document.getElementById('coverage-content').innerHTML = covHTML;
+
+    // Dependencies
+    const deps = data.dependencies || {};
+    let depsHTML = '';
+    if (deps.total_import_relations > 0) {
+        depsHTML += `<p>📦 ${deps.total_import_relations} 导入关系 · ${deps.files_with_imports} 个文件有导入</p>`;
+        const coupled = deps.top_coupled_modules || [];
+        if (coupled.length > 0) {
+            depsHTML += '<p style="font-size:.8rem;margin-top:.5rem;">耦合度最高的模块:</p>';
+            coupled.slice(0,5).forEach(m => {
+                depsHTML += `<div style="font-size:.8rem;margin:.15rem 0;">${m.module} <span class="tag tag-blue">被 ${m.imported_by_count} 个文件引用</span></div>`;
+            });
+        }
+        const circular = deps.potential_circular_deps || [];
+        if (circular.length > 0) {
+            depsHTML += `<p style="font-size:.8rem;color:var(--yellow);margin-top:.5rem;">⚠️ ${circular.length} 个潜在循环依赖</p>`;
+        }
+    } else {
+        depsHTML = '<p style="color:var(--text-muted);">未检测到导入关系</p>';
+    }
+    document.getElementById('deps-content').innerHTML = depsHTML;
+
+    // Duplication
+    const dupes = data.duplication || {};
+    let dupHTML = '';
+    const dupPairs = dupes.top_duplicate_pairs || [];
+    if (dupPairs.length > 0) {
+        dupHTML += `<p>📋 ${dupPairs.length} 对文件存在显著重复</p>`;
+        dupPairs.slice(0,5).forEach(d => {
+            dupHTML += `<div style="font-size:.8rem;margin:.15rem 0;">${d.file_a.split('/').pop()} ↔ ${d.file_b.split('/').pop()} <span class="tag tag-yellow">${d.shared_lines} 行</span></div>`;
+        });
+    } else {
+        dupHTML = '<p style="color:var(--text-muted);">✅ 未检测到显著代码重复</p>';
+    }
+    document.getElementById('dupes-content').innerHTML = dupHTML;
+
     // Alerts
     const alerts = [];
     if (data.authors?.bus_factor === 1) alerts.push({level:'red', text:`⚠️ 巴士因子 = 1：所有知识集中在一个人身上，这是最高风险！`});
@@ -293,6 +388,18 @@
     if (top3churn / totalChurn > 0.5) alerts.push({level:'yellow', text:`📊 前3个文件占 ${(top3churn/totalChurn*100).toFixed(0)}% 的改动——可能存在设计问题。`});
 
     if (risky.length > 5) alerts.push({level:'yellow', text:`🧩 ${risky.length} 个文件同时具有高复杂度和低注释率。`});
+
+    // Dead code
+    if ((deadcode.staleness_ratio || 0) > 0.2) alerts.push({level:'yellow', text:`💀 ${((deadcode.staleness_ratio||0)*100).toFixed(0)}% 的文件长期未修改——可能存在死代码。`});
+
+    // Circular deps
+    if ((deps.potential_circular_deps || []).length > 0) alerts.push({level:'yellow', text:`🔗 发现 ${deps.potential_circular_deps.length} 个潜在循环依赖。`});
+
+    // Test coverage
+    if ((cov.estimated_coverage_pct || 100) < 30 && (cov.total_source_files || 0) > 5) alerts.push({level:'red', text:`🧪 测试覆盖率极低 (${cov.coverage_grade})。${cov.uncovered_files || 0} 个源文件没有测试。`});
+
+    // Duplication
+    if ((dupes.top_duplicate_pairs || []).length > 5) alerts.push({level:'yellow', text:`📋 发现 ${dupes.top_duplicate_pairs.length} 对文件存在显著代码重复。`});
 
     const avgDaily = pulse.avg_commits_per_day || 0;
     if (avgDaily > 0 && avgDaily < 0.2) alerts.push({level:'yellow', text:`🐢 平均每日提交仅 ${avgDaily.toFixed(2)}，开发活跃度偏低。`});

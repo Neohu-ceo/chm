@@ -523,5 +523,58 @@ def init(path: str):
     click.echo(f"\n{click.style('  🎉 Ready! Lighthouse is watching your codebase.', fg='green')}\n")
 
 
+@main.command()
+@click.argument("path", default=".", type=click.Path(exists=True))
+@click.option("--install/--uninstall", default=True, help="Install or uninstall the git hook")
+def watch(path: str, install: bool):
+    """Auto-monitor: install a git post-commit hook to run analysis on every commit.
+
+    \b
+    Examples:
+      chm watch .             # Install hook
+      chm watch . --uninstall # Remove hook
+    """
+    repo_path = Path(path).resolve()
+    hooks_dir = repo_path / ".git" / "hooks"
+    hook_path = hooks_dir / "post-commit"
+
+    if not hooks_dir.exists():
+        click.echo("❌ Not a git repository", err=True)
+        sys.exit(1)
+
+    if not install:
+        if hook_path.exists():
+            hook_path.unlink()
+            click.echo("🗑️  Git hook removed. CHM will no longer auto-analyze commits.")
+        else:
+            click.echo("No hook installed.")
+        return
+
+    # Create the hook
+    chm_path = sys.argv[0] if sys.argv[0].endswith("chm") else "chm"
+    hook_script = f"""#!/bin/bash
+# CHM auto-analysis hook — installed by 'chm watch'
+# Runs a quick health snapshot after each commit.
+
+CHM="{chm_path}"
+REPO="{repo_path}"
+
+# Quick analysis (silent, logs to .chm/)
+mkdir -p "$REPO/.chm/"
+$CHM snapshot "$REPO" --max-commits 100 >> "$REPO/.chm/watch.log" 2>&1
+echo "  🏠 CHM snapshot saved" >> "$REPO/.chm/watch.log"
+"""
+
+    hook_path.write_text(hook_script)
+    hook_path.chmod(0o755)
+
+    click.echo(f"✅ Git post-commit hook installed!")
+    click.echo(f"   Hook: {hook_path}")
+    click.echo(f"   CHM will snapshot after each commit.")
+    click.echo(f"   Logs: {repo_path}/.chm/watch.log")
+    click.echo(f"")
+    click.echo(f"   To uninstall: {click.style('chm watch . --uninstall', fg='yellow')}")
+
+
 if __name__ == "__main__":
     main()

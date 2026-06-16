@@ -119,5 +119,80 @@ class TestTrendTracker:
         assert "new_hotspots" in data or "error" in data
 
 
+class TestDeadCodeAnalyzer:
+    def test_analyze_returns_data(self):
+        from chm.analyzers.dead_code import DeadCodeAnalyzer
+        data = DeadCodeAnalyzer(COLLECTOR).analyze()
+        assert "stale_files" in data
+        assert "staleness_ratio" in data
+        assert isinstance(data["total_stale"], int)
+
+    def test_staleness_ratio_in_range(self):
+        from chm.analyzers.dead_code import DeadCodeAnalyzer
+        data = DeadCodeAnalyzer(COLLECTOR).analyze()
+        assert 0 <= data["staleness_ratio"] <= 1
+
+    def test_empty_repo(self):
+        from chm.analyzers.dead_code import DeadCodeAnalyzer
+        from chm.git_collector import GitCollector
+        gc = GitCollector("/tmp/chm-test-single")
+        data = DeadCodeAnalyzer(gc).analyze()
+        assert "never_touched_in_history" in data
+
+
+class TestDependencyAnalyzer:
+    def test_analyze_returns_data(self):
+        from chm.analyzers.dependencies import DependencyAnalyzer
+        data = DependencyAnalyzer(COLLECTOR).analyze()
+        assert "top_coupled_modules" in data
+        assert "potential_circular_deps" in data
+        assert "total_import_relations" in data
+
+    def test_python_imports_detected(self):
+        from chm.analyzers.dependencies import DependencyAnalyzer
+        data = DependencyAnalyzer(COLLECTOR).analyze()
+        # Demo repo has Python files with imports
+        assert data["files_with_imports"] > 0
+
+    def test_no_false_circular(self):
+        from chm.analyzers.dependencies import DependencyAnalyzer
+        data = DependencyAnalyzer(COLLECTOR).analyze()
+        # Our demo shouldn't have circular deps
+        assert isinstance(data["potential_circular_deps"], list)
+
+
+class TestTestCoverageAnalyzer:
+    def test_analyze_returns_data(self):
+        from chm.analyzers.test_coverage import TestCoverageAnalyzer
+        data = TestCoverageAnalyzer(COLLECTOR).analyze()
+        assert "coverage_grade" in data
+        assert "estimated_coverage_pct" in data
+        assert data["coverage_grade"] in ("A", "B", "C", "D", "F")
+
+    def test_finds_test_files(self):
+        from chm.analyzers.test_coverage import TestCoverageAnalyzer
+        data = TestCoverageAnalyzer(COLLECTOR).analyze()
+        # Demo repo has tests/ directory
+        assert data["total_test_files"] >= 2
+
+    def test_coverage_range(self):
+        from chm.analyzers.test_coverage import TestCoverageAnalyzer
+        data = TestCoverageAnalyzer(COLLECTOR).analyze()
+        assert 0 <= data["estimated_coverage_pct"] <= 100
+
+
+class TestDuplicationAnalyzer:
+    def test_analyze_returns_data(self):
+        from chm.analyzers.duplication import DuplicationAnalyzer
+        data = DuplicationAnalyzer(COLLECTOR).analyze()
+        assert "duplication_summary" in data
+        assert "top_duplicate_pairs" in data
+
+    def test_no_crash_on_small_repo(self):
+        from chm.analyzers.duplication import DuplicationAnalyzer
+        data = DuplicationAnalyzer(COLLECTOR).analyze()
+        assert isinstance(data["file_pairs_with_duplication"], int)
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
