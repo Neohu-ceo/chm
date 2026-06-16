@@ -50,7 +50,6 @@ class StripeProvider(PaymentProvider):
 
     def create_checkout(self, amount: float, currency: str, user_email: str, plan: str) -> dict:
         if not self._active:
-            # Demo / stub mode
             session_id = f"cs_demo_{hashlib.sha256(f'{user_email}{time.time()}'.encode()).hexdigest()[:16]}"
             return {
                 "url": f"/demo-payment?session={session_id}&plan={plan}&amount={amount}",
@@ -58,30 +57,54 @@ class StripeProvider(PaymentProvider):
                 "mode": "demo",
             }
 
-        # Real Stripe integration:
-        # import stripe
-        # stripe.api_key = self.secret_key
-        # session = stripe.checkout.Session.create(
-        #     payment_method_types=['card'],
-        #     line_items=[{
-        #         'price': self.price_ids.get(plan),
-        #         'quantity': 1,
-        #     }],
-        #     mode='subscription',
-        #     success_url='https://lighthouse-analytics.dev/dashboard?session_id={CHECKOUT_SESSION_ID}',
-        #     cancel_url='https://lighthouse-analytics.dev/pricing',
-        #     customer_email=user_email,
-        # )
-        # return {'url': session.url, 'session_id': session.id}
+        import stripe
+        stripe.api_key = self.secret_key
 
-        raise NotImplementedError("Stripe is not configured. Set STRIPE_SECRET_KEY env var.")
+        # Use price ID from config, or create a dynamic line item
+        price_id = self.price_ids.get(plan)
+        if price_id:
+            line_items = [{"price": price_id, "quantity": 1}]
+        else:
+            # Dynamic pricing — create a one-time price on the fly
+            line_items = [{
+                "price_data": {
+                    "currency": currency.lower(),
+                    "product_data": {"name": f"Lighthouse Analytics — {plan.upper()} Plan"},
+                    "unit_amount": int(amount * 100),  # Stripe uses cents
+                    "recurring": {"interval": "month"},
+                },
+                "quantity": 1,
+            }]
+
+        base_url = os.getenv("BASE_URL", "http://localhost:5001")
+        session = stripe.checkout.Session.create(
+            payment_method_types=["card"],
+            line_items=line_items,
+            mode="subscription",
+            success_url=f"{base_url}/dashboard?session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{base_url}/pricing",
+            customer_email=user_email,
+            metadata={"plan": plan, "user_email": user_email},
+        )
+        return {"url": session.url, "session_id": session.id, "mode": "live"}
 
 
     def verify_payment(self, session_id: str) -> dict:
         if session_id.startswith("cs_demo_"):
             return {"success": True, "amount": 29.0, "provider_payment_id": f"pi_demo_{session_id}"}
-        # Real verification: check Stripe session status
-        raise NotImplementedError("Stripe is not configured.")
+
+        import stripe
+        stripe.api_key = self.secret_key
+        session = stripe.checkout.Session.retrieve(session_id)
+
+        if session.payment_status == "paid":
+            return {
+                "success": True,
+                "amount": session.amount_total / 100,
+                "provider_payment_id": session.payment_intent,
+                "customer_id": session.customer,
+            }
+        return {"success": False, "status": session.payment_status}
 
 
 class PayPalProvider(PaymentProvider):
