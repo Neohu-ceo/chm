@@ -802,6 +802,15 @@ def api_apply_referral():
     })
 
 
+# ── Test Utilities ──────────────────────────────────────────────
+
+@app.route("/api/_test/reset-limits", methods=["POST"])
+def api_test_reset_limits():
+    """Reset rate limits (test only)."""
+    _rate_limits.clear()
+    return jsonify({"success": True})
+
+
 # ── Health Check ───────────────────────────────────────────────
 
 @app.route("/health")

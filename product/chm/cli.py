@@ -50,7 +50,7 @@ def analyze(path: str, report: str, output: str, max_commits: int):
         click.echo(f"❌ {e}", err=True)
         sys.exit(1)
 
-    click.echo(f"🔍 Analyzing {click.style(collector.repo_name(), bold=True)}...")
+    click.echo(f"🔍 Analyzing {click.style(collector.repo_name(), bold=True)}...", err=True)
     start_time = time.time()
 
     # Collect base data (must be sequential — shared git calls)
@@ -74,7 +74,7 @@ def analyze(path: str, report: str, output: str, max_commits: int):
         futures = {executor.submit(fn): name for name, fn in analyzers.items()}
         for future in as_completed(futures):
             name = futures[future]
-            click.echo(f"  ├─ {name}...")
+            click.echo(f"  ├─ {name}...", err=True)
             results_partial[name] = future.result()
 
     hotspots = results_partial["hotspots"]
@@ -112,7 +112,7 @@ def analyze(path: str, report: str, output: str, max_commits: int):
     # Output
     if report == "terminal":
         tr.render_all(results)
-        click.echo(f"  ⏱️  Analysis completed in {elapsed:.1f}s")
+        click.echo(f"  ⏱️  Analysis completed in {elapsed:.1f}s", err=True)
     elif report == "html":
         html = HTMLReporter().render_all(results)
         if output:
@@ -134,11 +134,11 @@ def analyze(path: str, report: str, output: str, max_commits: int):
     if report == "terminal":
         score = results["health_score"]
         if score >= 80:
-            click.echo(f"  🟢 Overall: {click.style('Healthy', fg='green')}")
+            click.echo(f"  🟢 Overall: {click.style('Healthy', fg='green')}", err=True)
         elif score >= 50:
-            click.echo(f"  🟡 Overall: {click.style('Fair', fg='yellow')}")
+            click.echo(f"  🟡 Overall: {click.style('Fair', fg='yellow')}", err=True)
         else:
-            click.echo(f"  🔴 Overall: {click.style('Needs Attention', fg='red')}")
+            click.echo(f"  🔴 Overall: {click.style('Needs Attention', fg='red')}", err=True)
 
 
 @main.command()
