@@ -274,6 +274,90 @@ def compare_snapshots(repo_path: str = ".", snapshot_a: int = -2, snapshot_b: in
 
 # ── Resources ──────────────────────────────────────────────────
 
+@mcp.tool()
+def get_stats(repo_path: str = ".") -> dict:
+    """Get aggregate statistics overview for a repository."""
+    collector = _get_collector(repo_path)
+    from chm.analyzers import (
+        HotspotAnalyzer, AuthorAnalyzer, PulseAnalyzer, ComplexityAnalyzer,
+        DeadCodeAnalyzer, TestCoverageAnalyzer, DuplicationAnalyzer, DependencyAnalyzer,
+    )
+    h = HotspotAnalyzer(collector).analyze()
+    a = AuthorAnalyzer(collector).analyze()
+    p = PulseAnalyzer(collector).analyze()
+    cx = ComplexityAnalyzer(collector).analyze()
+    d = DeadCodeAnalyzer(collector).analyze()
+    cv = TestCoverageAnalyzer(collector).analyze()
+    dup = DuplicationAnalyzer(collector).analyze()
+    dep = DependencyAnalyzer(collector).analyze()
+    return {
+        "repo": collector.repo_name(),
+        "commits": collector.total_commits(), "files": collector.total_files(),
+        "bus_factor": a["bus_factor"], "contributors": a["total_contributors"],
+        "total_churn": h["total_churn"], "hotspots_count": len(h["top_hotspots"]),
+        "avg_complexity": cx["avg_complexity"], "risky_files": len(cx["risky_files"]),
+        "stale_files": d["total_stale"], "test_coverage": f"{cv['coverage_grade']} ({cv['estimated_coverage_pct']}%)",
+        "import_relations": dep["total_import_relations"], "circular_deps": len(dep["potential_circular_deps"]),
+        "dup_pairs": dup["file_pairs_with_duplication"],
+    }
+
+
+@mcp.tool()
+def get_top_files(repo_path: str = ".", metric: str = "churn", top_n: int = 10) -> dict:
+    """Get top files ranked by a metric (churn, changes, authors, complexity, lines)."""
+    collector = _get_collector(repo_path)
+    from chm.analyzers import HotspotAnalyzer, ComplexityAnalyzer
+    if metric in ("churn", "changes", "authors"):
+        data = HotspotAnalyzer(collector).analyze()["top_hotspots"]
+        if metric == "changes": data.sort(key=lambda x: x["changes"], reverse=True)
+        elif metric == "authors": data.sort(key=lambda x: x["unique_authors"], reverse=True)
+    else:
+        data = ComplexityAnalyzer(collector).analyze()["top_complex"]
+        if metric == "lines": data.sort(key=lambda x: x["lines"], reverse=True)
+    return {"repo": collector.repo_name(), "metric": metric, "files": data[:top_n]}
+
+
+@mcp.tool()
+def get_file_health(repo_path: str = ".", file_path: str = "") -> dict:
+    """Get detailed health information about a specific file."""
+    collector = _get_collector(repo_path)
+    from chm.analyzers import HotspotAnalyzer, ComplexityAnalyzer
+    hotspots = HotspotAnalyzer(collector).analyze()
+    complexity = ComplexityAnalyzer(collector).analyze()
+    file_hotspot = next((h for h in hotspots["top_hotspots"] if h["file"] == file_path), None)
+    file_complex = next((f for f in complexity["top_complex"] if f["file"] == file_path), None)
+    return {
+        "file": file_path,
+        "hotspot": file_hotspot,
+        "complexity": file_complex,
+        "found": file_hotspot is not None or file_complex is not None,
+    }
+
+
+@mcp.tool()
+def get_workspace_health(repo_paths: list[str]) -> dict:
+    """Compare health scores across multiple repositories."""
+    results = []
+    from chm.analyzers import AuthorAnalyzer, HotspotAnalyzer
+    from chm.reporters import TerminalReporter
+    tr = TerminalReporter()
+    for p in repo_paths:
+        try:
+            c = _get_collector(p)
+            h = HotspotAnalyzer(c).analyze()
+            a = AuthorAnalyzer(c).analyze()
+            score = tr._calculate_health_score({
+                "hotspots": h, "authors": a, "pulse": {},
+                "complexity": {}, "dead_code": {},
+                "dependencies": {}, "test_coverage": {}, "duplication": {},
+            })
+            results.append({"repo": c.repo_name(), "health_score": score, "bus_factor": a["bus_factor"]})
+        except ValueError:
+            results.append({"repo": p, "error": "not a git repo"})
+    results.sort(key=lambda x: x.get("health_score", 0), reverse=True)
+    return {"repos": results, "count": len(results)}
+
+
 @mcp.resource("health://{repo_path}")
 def health_resource(repo_path: str = ".") -> str:
     """Get a human-readable health report for a repository."""
