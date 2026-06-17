@@ -948,5 +948,40 @@ def hook(path: str, install: bool):
             click.echo("No hook installed.")
 
 
+@main.command()
+@click.argument("path", default=".", type=click.Path(exists=True))
+def check(path: str):
+    """Quick health check — one line status like 'git status'."""
+    from chm.git_collector import GitCollector
+    from chm.analyzers import AuthorAnalyzer, HotspotAnalyzer, TestCoverageAnalyzer
+    from chm.reporters import TerminalReporter
+
+    repo_path = str(Path(path).resolve())
+    try:
+        c = GitCollector(repo_path)
+    except ValueError:
+        click.echo("❌ Not a git repo")
+        sys.exit(1)
+
+    authors = AuthorAnalyzer(c).analyze()
+    hotspots = HotspotAnalyzer(c).analyze()
+    coverage = TestCoverageAnalyzer(c).analyze()
+    tr = TerminalReporter()
+    score = tr._calculate_health_score({
+        "hotspots": hotspots, "authors": authors, "pulse": {},
+        "complexity": {}, "dead_code": {}, "dependencies": {},
+        "test_coverage": coverage, "duplication": {},
+    })
+
+    bf = authors["bus_factor"]
+    top = hotspots["top_hotspots"][0]["file"].split("/")[-1][:20] if hotspots["top_hotspots"] else "?"
+    cov = coverage.get("coverage_grade", "?")
+
+    color = "green" if score >= 70 else "yellow" if score >= 40 else "red"
+    emoji = "🟢" if score >= 70 else "🟡" if score >= 40 else "🔴"
+
+    click.echo(f"{emoji} {score}/100 | BF:{bf} | 🔥:{top} | 🧪:{cov} | {c.repo_name()}")
+
+
 if __name__ == "__main__":
     main()
