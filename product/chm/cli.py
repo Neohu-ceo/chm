@@ -1111,5 +1111,22 @@ def top_cmd(path: str, metric: str, top: int):
             click.echo(f"  {i+1:2}. {f['file'][:55]:<55} complexity:{f['complexity_score']:>6} lines:{f['lines']:>5}")
 
 
+@main.command()
+@click.argument("path", default=".", type=click.Path(exists=True))
+def reset(path: str):
+    """Reset all CHM data for a repository."""
+    import shutil
+    chm_dir = Path(path).resolve() / ".chm"
+    ignore_file = Path(".chmignore")
+
+    if chm_dir.exists():
+        shutil.rmtree(chm_dir)
+        click.echo(f"🗑️ Removed {chm_dir}")
+    if ignore_file.exists():
+        ignore_file.unlink()
+        click.echo(f"🗑️ Removed {ignore_file}")
+    click.echo("✅ CHM data reset. Run 'chm init .' to start fresh.")
+
+
 if __name__ == "__main__":
     main()
