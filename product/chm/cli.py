@@ -1043,5 +1043,44 @@ def serve_cmd(path: str, port: int):
     serve(str(Path(path).resolve()), port)
 
 
+@main.command()
+@click.argument("path", default=".", type=click.Path(exists=True))
+def stats(path: str):
+    """Show aggregate statistics across all analysis dimensions."""
+    from chm.git_collector import GitCollector
+    from chm.analyzers import (
+        HotspotAnalyzer, AuthorAnalyzer, PulseAnalyzer, ComplexityAnalyzer,
+        DeadCodeAnalyzer, TestCoverageAnalyzer, DuplicationAnalyzer, DependencyAnalyzer,
+    )
+
+    c = GitCollector(str(Path(path).resolve()))
+    h = HotspotAnalyzer(c).analyze()
+    a = AuthorAnalyzer(c).analyze()
+    p = PulseAnalyzer(c).analyze()
+    cx = ComplexityAnalyzer(c).analyze()
+    d = DeadCodeAnalyzer(c).analyze()
+    dep = DependencyAnalyzer(c).analyze()
+    cv = TestCoverageAnalyzer(c).analyze()
+    dup = DuplicationAnalyzer(c).analyze()
+
+    click.echo(f"\n📊 CHM Stats — {c.repo_name()}")
+    click.echo(f"{'─'*40}")
+    click.echo(f"  Commits:        {c.total_commits():>8,}")
+    click.echo(f"  Files:          {c.total_files():>8,}")
+    click.echo(f"  Contributors:   {a['total_contributors']:>8}")
+    click.echo(f"  Bus Factor:     {a['bus_factor']:>8}")
+    click.echo(f"  Total Churn:    {h['total_churn']:>8,}")
+    click.echo(f"  Hotspots:       {len(h['top_hotspots']):>8}")
+    click.echo(f"  Avg Complexity: {cx['avg_complexity']:>8.1f}")
+    click.echo(f"  Risky Files:    {len(cx['risky_files']):>8}")
+    click.echo(f"  Stale Files:    {d['total_stale']:>8}")
+    click.echo(f"  Test Coverage:  {cv['coverage_grade']} ({cv['estimated_coverage_pct']}%)")
+    click.echo(f"  Import Relations:{dep['total_import_relations']:>8}")
+    click.echo(f"  Circular Deps:  {len(dep['potential_circular_deps']):>8}")
+    click.echo(f"  Dup. Pairs:     {dup['file_pairs_with_duplication']:>8}")
+    if p.get("streaks"):
+        click.echo(f"  Longest Streak: {p['streaks']['longest_streak_days']:>8} days")
+
+
 if __name__ == "__main__":
     main()
