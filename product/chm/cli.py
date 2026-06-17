@@ -1033,5 +1033,15 @@ def ignore(pattern: str, add_pattern: str, rm_pattern: str, list_flag: bool):
         click.echo(f"✅ Ignoring: {pattern}")
 
 
+@main.command()
+@click.argument("path", default=".", type=click.Path(exists=True))
+@click.option("--port", "-p", default=5299, help="Port to listen on")
+def serve_cmd(path: str, port: int):
+    """Start a local web dashboard for your codebase health."""
+    from chm.serve import serve
+    click.echo(f"🏠 Starting CHM Dashboard...")
+    serve(str(Path(path).resolve()), port)
+
+
 if __name__ == "__main__":
     main()
