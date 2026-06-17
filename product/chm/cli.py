@@ -1082,5 +1082,34 @@ def stats(path: str):
         click.echo(f"  Longest Streak: {p['streaks']['longest_streak_days']:>8} days")
 
 
+@main.command()
+@click.argument("path", default=".", type=click.Path(exists=True))
+@click.option("--metric", "-m", default="churn", type=click.Choice(["churn","changes","authors","complexity","lines"]), help="Metric to rank by")
+@click.option("--top", "-t", default=10, help="Number of files to show")
+def top_cmd(path: str, metric: str, top: int):
+    """Show top files ranked by a health metric.
+
+    \b
+    Metrics: churn, changes, authors, complexity, lines
+    """
+    from chm.git_collector import GitCollector
+    from chm.analyzers import HotspotAnalyzer, ComplexityAnalyzer
+
+    c = GitCollector(str(Path(path).resolve()))
+    click.echo(f"\n🏆 Top {top} by {metric} — {c.repo_name()}\n")
+
+    if metric in ("churn", "changes", "authors"):
+        data = HotspotAnalyzer(c).analyze()["top_hotspots"]
+        if metric == "changes": data.sort(key=lambda x: x["changes"], reverse=True)
+        elif metric == "authors": data.sort(key=lambda x: x["unique_authors"], reverse=True)
+        for i, h in enumerate(data[:top]):
+            click.echo(f"  {i+1:2}. {h['file'][:55]:<55} churn:{h['total_churn']:>6} changes:{h['changes']:>4} authors:{h['unique_authors']}")
+    elif metric in ("complexity", "lines"):
+        data = ComplexityAnalyzer(c).analyze()["top_complex"]
+        if metric == "lines": data.sort(key=lambda x: x["lines"], reverse=True)
+        for i, f in enumerate(data[:top]):
+            click.echo(f"  {i+1:2}. {f['file'][:55]:<55} complexity:{f['complexity_score']:>6} lines:{f['lines']:>5}")
+
+
 if __name__ == "__main__":
     main()
