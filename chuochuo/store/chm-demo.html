@@ -1,0 +1,175 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CHM 在线体验 — 代码健康度分析</title>
+<style>:root{--bg:#0a0a0a;--card:#141414;--text:#e0d8d0;--muted:#888;--accent:#2563eb;--green:#10b981;--yellow:#f59e0b;--red:#ef4444}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,'PingFang SC',sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+.hero{text-align:center;padding:3rem 1rem 1rem}
+.hero h1{font-size:2.2rem;font-weight:800}.hero h1 span{color:var(--accent)}
+.hero p{color:var(--muted);margin:.5rem 0}
+.container{max-width:800px;margin:0 auto;padding:1rem}
+textarea{width:100%;height:150px;background:var(--card);color:var(--text);border:1px solid #333;border-radius:12px;padding:1rem;font-family:monospace;font-size:.8rem;resize:vertical}
+textarea:focus{outline:none;border-color:var(--accent)}
+.btn{display:inline-block;padding:.7rem 2rem;border-radius:10px;font-weight:700;font-size:.95rem;cursor:pointer;border:none;transition:.15s}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{filter:brightness(1.2)}
+.btn-outline{background:transparent;border:1px solid #444;color:var(--text)}
+.quick-btn{background:var(--card);border:1px solid #333;color:var(--muted);padding:.4rem 1rem;border-radius:20px;font-size:.8rem;cursor:pointer;margin:.25rem}
+.quick-btn:hover{border-color:var(--accent);color:var(--accent)}
+.result{display:none;margin-top:1.5rem}
+.card{background:var(--card);border-radius:16px;padding:1.5rem;border:1px solid #222;margin-bottom:1rem}
+.score-big{font-size:4rem;font-weight:900;text-align:center;line-height:1}
+.metric-row{display:flex;gap:1rem;flex-wrap:wrap;margin:1rem 0}
+.metric{flex:1;min-width:80px;text-align:center;background:#0a0a0a;border-radius:10px;padding:.75rem}
+.metric .val{font-size:1.5rem;font-weight:700}.metric .lbl{font-size:.7rem;color:var(--muted)}
+.bar-wrap{display:flex;align-items:center;gap:.5rem;margin:.3rem 0}
+.bar{height:6px;border-radius:3px;min-width:2px}
+.alert{padding:.5rem .75rem;border-radius:8px;margin:.3rem 0;font-size:.85rem}
+.alert-red{border-left:3px solid var(--red);background:rgba(239,68,68,.1);color:#fca5a5}
+.alert-yellow{border-left:3px solid var(--yellow);background:rgba(245,158,11,.1);color:#fcd34d}
+.alert-green{border-left:3px solid var(--green);background:rgba(16,185,129,.1);color:#86efac}
+.cta{text-align:center;margin-top:2rem;padding:2rem;background:linear-gradient(135deg,#0f172a,#1e3a5f);border-radius:20px}
+.cta h2{margin-bottom:.5rem}.cta p{color:var(--muted);margin-bottom:1rem}
+footer{text-align:center;padding:2rem;color:#333;font-size:.75rem}
+</style></head><body>
+<div class="hero">
+  <h1>🏠 CHM <span>在线体验</span></h1>
+  <p>粘贴 git 数据，3 秒出健康报告。不用安装任何东西。</p>
+</div>
+<div class="container">
+  <p style="color:var(--muted);font-size:.85rem;margin-bottom:.5rem;">
+    在你的终端运行以下命令，粘贴输出：
+  </p>
+  <div style="background:#0a0a0a;border-radius:8px;padding:.75rem;font-family:monospace;font-size:.8rem;color:var(--green);margin-bottom:1rem;">
+    git log --format="%an|%ad" --date=short -30 && echo "---FILES---" && git log --numstat --format="" -30
+  </div>
+  <div style="margin-bottom:.75rem;">
+    <button class="quick-btn" onclick="loadDemo()">📦 加载演示数据</button>
+    <button class="quick-btn" onclick="document.getElementById('git-input').value='';document.getElementById('result').style.display='none'">✕ 清空</button>
+  </div>
+  <textarea id="git-input" placeholder="在这里粘贴 git log 输出..."></textarea>
+  <button class="btn btn-primary" style="margin-top:.75rem;" onclick="analyze()">🔍 分析我的代码库</button>
+
+  <div class="result" id="result"><div id="output"></div></div>
+
+  <div class="cta">
+    <h2>想要完整的 8 维分析 + HTML 报告？</h2>
+    <p>安装完整版，30 秒上手。核心功能永久免费。</p>
+    <code style="display:block;background:#0a0a0a;padding:.75rem;border-radius:8px;color:var(--green);font-size:.9rem;margin-bottom:1rem;">pip install chm-cli && chm doctor .</code>
+    <a href="https://github.com/Neohu-ceo/chm" class="btn btn-primary" target="_blank">⭐ GitHub</a>
+    <a href="http://localhost:5001/pricing" class="btn btn-outline" style="margin-left:.5rem;">💎 Pro ($29/月)</a>
+  </div>
+</div>
+<footer>🏠 CHM by Lighthouse Analytics · MIT 开源 · 代码从不出你电脑</footer>
+
+<script>
+const DEMO = `Alice|2024-11-15
+Alice|2024-11-18
+Bob|2024-11-20
+Alice|2024-11-22
+Bob|2024-11-25
+Carol|2024-11-28
+Alice|2024-12-01
+Bob|2024-12-03
+Alice|2024-12-05
+Carol|2024-12-08
+Bob|2024-12-10
+Alice|2024-12-12
+Alice|2024-12-15
+Bob|2024-12-18
+Carol|2024-12-20
+Alice|2024-12-22
+Bob|2024-12-27
+Alice|2025-01-02
+Carol|2025-01-05
+Bob|2025-01-08
+Alice|2025-01-10
+Alice|2025-01-12
+Bob|2025-01-15
+Carol|2025-01-18
+Bob|2025-01-20
+---FILES---
+12\t0\tsrc/api/server.py
+8\t3\tsrc/api/server.py
+0\t5\tsrc/models/user.py
+45\t0\tsrc/auth/login.py
+3\t2\tsrc/api/server.py
+20\t0\tsrc/models/user.py
+0\t8\tsrc/payment/stripe.py
+15\t5\tsrc/auth/login.py
+5\t0\tsrc/api/server.py
+25\t0\tsrc/payment/stripe.py
+3\t3\tsrc/models/user.py
+0\t12\ttests/test_auth.py
+40\t0\tsrc/payment/refund.py
+2\t8\tsrc/api/server.py
+35\t0\tsrc/notification/email.py
+10\t5\tsrc/auth/login.py
+0\t20\tsrc/payment/stripe.py
+5\t0\ttests/test_api.py
+60\t0\tsrc/notification/sms.py
+4\t1\tsrc/api/server.py`;
+
+function loadDemo(){document.getElementById('git-input').value=DEMO}
+
+function analyze(){
+  const raw=document.getElementById('git-input').value.trim();
+  if(!raw)return alert('请先粘贴 git log 输出或加载演示数据');
+  const lines=raw.split('\n');
+  const authors={},files={},dates=[];
+  let inFiles=false;
+  for(const l of lines){
+    if(l.startsWith('---FILES---')){inFiles=true;continue}
+    if(!inFiles){
+      const p=l.split('|');
+      if(p.length>=2){const a=p[0].trim();authors[a]=(authors[a]||0)+1;dates.push(p[1].trim().slice(0,10))}
+    }else{
+      const p=l.split('\t');
+      if(p.length===3){const f=p[2],adds=parseInt(p[0])||0,dels=parseInt(p[1])||0;if(!files[f])files[f]={c:0,ch:0};files[f].c+=1;files[f].ch+=adds+dels}
+    }
+  }
+  const totalCommits=dates.length;
+  const totalAuthors=Object.keys(authors).length;
+  const sorted=Object.entries(files).sort((a,b)=>b[1].ch-a[1].ch);
+  const totalChurn=sorted.reduce((s,f)=>s+f[1].ch,0);
+
+  let score=50;const alerts=[];
+  const ac=Object.entries(authors).sort((a,b)=>b[1]-a[1]);
+  let cum=0,bf=ac.length;
+  for(let i=0;i<ac.length;i++){cum+=ac[i][1];if(cum>=totalCommits*.5){bf=i+1;break}}
+  if(bf===1){score-=20;alerts.push({level:'red',text:`🚨 巴士因子=1: ${ac[0][0]} 贡献了 ${(ac[0][1]/totalCommits*100).toFixed(0)}% 的提交。关键人物风险。`})}
+  else if(bf<=2){score-=10;alerts.push({level:'yellow',text:`⚠️ 巴士因子=${bf}。知识集中在少数人手中。`})}
+  else{alerts.push({level:'green',text:`✅ 巴士因子=${bf}。知识分布良好。`});score+=5}
+
+  const top3=sorted.slice(0,3).reduce((s,f)=>s+f[1].ch,0);
+  if(top3/totalChurn>.5&&sorted.length>5){score-=15;
+    alerts.push({level:'yellow',text:`📊 前3文件占${(top3/totalChurn*100).toFixed(0)}%改动。${sorted[0][0]} 是最大热区。`})}
+
+  const uniqDays=new Set(dates).size;
+  const dr=dates.sort();
+  const totalDays=(new Date(dr[dr.length-1])-new Date(dr[0]))/86400000+1;
+  if(uniqDays/totalDays>.5){score+=10;alerts.push({level:'green',text:'✅ 提交频率稳定，活跃度良好。'})}
+  else if(uniqDays/totalDays<.2){score-=5;alerts.push({level:'yellow',text:'🐢 提交频率偏低，可能存在长时间空白期。'})}
+
+  score=Math.max(0,Math.min(100,score));
+  const color=score>=70?'var(--green)':score>=40?'var(--yellow)':'var(--red)';
+  const word=score>=70?'健康':score>=40?'一般':'需改进';
+
+  document.getElementById('output').innerHTML=`
+    <div class="card" style="text-align:center">
+      <div class="score-big" style="color:${color}">${score}<span style="font-size:1rem">/100</span></div>
+      <div style="color:${color};font-weight:700">${word}</div>
+    </div>
+    <div class="metric-row">
+      <div class="metric"><div class="val">${totalCommits}</div><div class="lbl">提交</div></div>
+      <div class="metric"><div class="val">${totalAuthors}</div><div class="lbl">贡献者</div></div>
+      <div class="metric"><div class="val">${bf}</div><div class="lbl">巴士因子</div></div>
+      <div class="metric"><div class="val">${sorted.length}</div><div class="lbl">变动文件</div></div>
+      <div class="metric"><div class="val">${(totalChurn/1000).toFixed(1)}k</div><div class="lbl">总改动行</div></div>
+    </div>
+    <div class="card"><h3 style="margin-bottom:.75rem">🔥 代码热区 Top 5</h3>
+      ${sorted.slice(0,5).map((f,i)=>{const pct=f[1].ch/Math.max(...sorted.map(x=>x[1].ch))*100;const cls=pct>66?'var(--red)':pct>33?'var(--yellow)':'var(--green)';return`<div class="bar-wrap"><span style="width:${Math.max(30-pct,8)}%;text-align:right;font-size:.8rem;overflow:hidden">${f[0].split('/').pop()}</span><div style="flex:1;background:#222;border-radius:3px"><div class="bar" style="width:${pct}%;background:${cls}"></div></div><small>${f[1].ch}</small></div>`}).join('')}
+    </div>
+    <div class="card">${alerts.map(a=>`<div class="alert alert-${a.level}">${a.text}</div>`).join('')}</div>
+  `;
+  document.getElementById('result').style.display='block';
+  document.getElementById('result').scrollIntoView({behavior:'smooth'});
+}
+</script></body></html>

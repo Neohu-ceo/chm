@@ -142,6 +142,15 @@ def settings_page():
     return _render_page("settings.html", title="设置 — Lighthouse Analytics", user=g.user)
 
 
+@app.route("/demo")
+def demo_page():
+    """Free online demo — try CHM without installing."""
+    demo_path = os.path.join(os.path.dirname(__file__), "..", "chuochuo", "store", "chm-demo.html")
+    if os.path.exists(demo_path):
+        return open(demo_path).read()
+    return "<h1>Demo not found</h1>", 404
+
+
 @app.route("/docs")
 def docs_page():
     """Public documentation page."""
