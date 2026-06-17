@@ -806,5 +806,64 @@ def export(path: str, output: str):
         click.echo(csv_data)
 
 
+@main.command()
+@click.argument("path", default=".", type=click.Path(exists=True))
+def share(path: str):
+    """Generate a shareable link to your code health report.
+
+    Uploads the report to the CHM cloud and returns a public URL.
+    """
+    from chm.git_collector import GitCollector
+    from chm.reporters import TerminalReporter, HTMLReporter
+    from chm.analyzers import (
+        HotspotAnalyzer, AuthorAnalyzer, PulseAnalyzer, ComplexityAnalyzer,
+        DeadCodeAnalyzer, TestCoverageAnalyzer,
+    )
+
+    repo_path = Path(path).resolve()
+    try:
+        collector = GitCollector(str(repo_path))
+    except ValueError as e:
+        click.echo(f"❌ {e}", err=True)
+        sys.exit(1)
+
+    click.echo("📊 Generating report...", err=True)
+
+    # Run analysis
+    results = {
+        "repo_name": collector.repo_name(),
+        "total_commits": collector.total_commits(),
+        "total_files": collector.total_files(),
+        "hotspots": HotspotAnalyzer(collector).analyze(),
+        "authors": AuthorAnalyzer(collector).analyze(),
+        "pulse": PulseAnalyzer(collector).analyze(),
+        "complexity": ComplexityAnalyzer(collector).analyze(),
+        "dead_code": DeadCodeAnalyzer(collector).analyze(),
+        "test_coverage": TestCoverageAnalyzer(collector).analyze(),
+    }
+    tr = TerminalReporter()
+    results["health_score"] = tr._calculate_health_score(results)
+
+    # Try to upload to SaaS
+    import urllib.request, json
+    try:
+        data = json.dumps({"report": results}).encode()
+        req = urllib.request.Request(
+            "http://localhost:5001/api/reports/share",
+            data=data,
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        with urllib.request.urlopen(req, timeout=5) as r:
+            resp = json.loads(r.read())
+        click.echo(f"\n✅ 报告已分享！\n   🔗 {resp['url']}\n")
+    except Exception:
+        # Fallback: generate local HTML
+        html = HTMLReporter().render_all(results)
+        out = Path(f"/tmp/chm-{collector.repo_name()}-report.html")
+        out.write_text(html)
+        click.echo(f"\n✅ 报告已生成（离线模式）\n   📄 {out}\n   💡 启动 SaaS 后可获得分享链接")
+
+
 if __name__ == "__main__":
     main()
