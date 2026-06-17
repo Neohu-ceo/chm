@@ -915,5 +915,38 @@ def diff(path: str, ci: bool):
         sys.exit(1)
 
 
+@main.command()
+def ci():
+    """Generate GitHub Actions workflow for CHM health checks."""
+    from chm.ci import generate_github_actions
+    workflow = generate_github_actions()
+    click.echo(workflow)
+    click.echo(f"\n{click.style('📋 Copy the above to .github/workflows/chm.yml', fg='green')}")
+
+
+@main.command()
+@click.argument("path", default=".", type=click.Path(exists=True))
+@click.option("--install/--uninstall", default=True)
+def hook(path: str, install: bool):
+    """Install or uninstall CHM as a git pre-commit hook."""
+    from chm.ci import install_precommit_hook, uninstall_precommit_hook
+
+    repo_path = str(Path(path).resolve())
+    if not Path(repo_path, ".git").exists():
+        click.echo("❌ Not a git repository", err=True)
+        sys.exit(1)
+
+    if install:
+        if install_precommit_hook(repo_path):
+            click.echo("✅ Pre-commit hook installed. CHM snapshots on every commit.")
+        else:
+            click.echo("⚠️ Already installed")
+    else:
+        if uninstall_precommit_hook(repo_path):
+            click.echo("🗑️ Pre-commit hook removed.")
+        else:
+            click.echo("No hook installed.")
+
+
 if __name__ == "__main__":
     main()
