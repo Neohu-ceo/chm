@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/github/stars/Neohu-ceo/chm" alt="Stars">
 </p>
 
-**One command to know your codebase health.** 21 CLI commands, 8 analysis dimensions, MCP server for AI agents. MIT licensed. Local-first. Zero config.
+**One command to know your codebase health.** 31 CLI commands, 8 analysis dimensions, MCP server for AI agents. MIT licensed. Local-first. Zero config.
 
 ```bash
 pip install chm-cli
