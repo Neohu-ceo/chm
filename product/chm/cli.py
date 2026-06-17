@@ -865,5 +865,55 @@ def share(path: str):
         click.echo(f"\n✅ 报告已生成（离线模式）\n   📄 {out}\n   💡 启动 SaaS 后可获得分享链接")
 
 
+@main.command()
+@click.argument("path", default=".", type=click.Path(exists=True))
+@click.option("--ci", is_flag=True, help="CI mode: exit 1 if health degraded")
+def diff(path: str, ci: bool):
+    """Compare current health against last snapshot. Perfect for CI/CD.
+
+    \b
+    Usage:
+      chm diff .              # Show health changes
+      chm diff . --ci         # CI mode: fail if degraded
+    """
+    from chm.analyzers.diff import DiffAnalyzer
+
+    repo_path = Path(path).resolve()
+    data = DiffAnalyzer(str(repo_path)).diff()
+
+    if "error" in data:
+        click.echo(f"❌ {data['error']}", err=True)
+        sys.exit(1)
+
+    click.echo(f"\n📊 Health Diff — {Path(path).resolve().name}")
+    click.echo(f"   Score: {data['health_score_previous']} → {data['health_score_current']} "
+               f"({'📈' if data['health_score_current'] > data['health_score_previous'] else '📉' if data['health_score_current'] < data['health_score_previous'] else '➡️'})")
+
+    # Deltas
+    deltas = [
+        ("Commits", "commits", ""),
+        ("Churn", "total_churn", ""),
+        ("Bus Factor", "bus_factor", ""),
+        ("Avg Complexity", "avg_complexity", ""),
+        ("Risky Files", "risky_files", ""),
+        ("Test Coverage", "test_coverage", "%"),
+    ]
+    for label, key, suffix in deltas:
+        val = data.get(key, 0)
+        sign = "+" if val > 0 else ""
+        good = (key in ("bus_factor", "test_coverage") and val > 0) or (key in ("risky_files", "avg_complexity", "total_churn") and val < 0)
+        color = "green" if good else "red" if val != 0 else "white"
+        click.echo(f"   {label}: {click.style(f'{sign}{val}{suffix}', fg=color)}")
+
+    # Warnings
+    for w in data.get("ci_warnings", []):
+        click.echo(f"   {w}")
+
+    click.echo(f"\n   CI Status: {click.style(data['ci_status'].upper(), fg='green' if data['ci_status'] == 'pass' else 'red')}")
+
+    if ci and data["ci_status"] == "fail":
+        sys.exit(1)
+
+
 if __name__ == "__main__":
     main()
