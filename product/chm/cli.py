@@ -983,5 +983,55 @@ def check(path: str):
     click.echo(f"{emoji} {score}/100 | BF:{bf} | 🔥:{top} | 🧪:{cov} | {c.repo_name()}")
 
 
+@main.command()
+@click.argument("pattern", required=False)
+@click.option("--add", "-a", "add_pattern", help="Add an ignore pattern")
+@click.option("--remove", "-r", "rm_pattern", help="Remove an ignore pattern")
+@click.option("--list", "-l", "list_flag", is_flag=True, help="List current ignores")
+def ignore(pattern: str, add_pattern: str, rm_pattern: str, list_flag: bool):
+    """Manage files/directories excluded from analysis.
+
+    \b
+    Examples:
+      chm ignore --add "*.json"       # Ignore JSON files
+      chm ignore --add "node_modules/" # Ignore node_modules
+      chm ignore --list               # Show all ignores
+      chm ignore --remove "*.json"    # Stop ignoring JSON
+    """
+    import json
+    from pathlib import Path
+
+    cfg_file = Path(".chmignore")
+    ignores = json.loads(cfg_file.read_text()) if cfg_file.exists() else []
+
+    if add_pattern:
+        if add_pattern not in ignores:
+            ignores.append(add_pattern)
+            cfg_file.write_text(json.dumps(ignores, indent=2))
+            click.echo(f"✅ Ignoring: {add_pattern}")
+        else:
+            click.echo(f"Already ignoring: {add_pattern}")
+    elif rm_pattern:
+        if rm_pattern in ignores:
+            ignores.remove(rm_pattern)
+            cfg_file.write_text(json.dumps(ignores, indent=2))
+            click.echo(f"🗑️ Removed: {rm_pattern}")
+        else:
+            click.echo(f"Pattern not found: {rm_pattern}")
+    elif list_flag or not pattern:
+        if ignores:
+            click.echo("📋 Ignored patterns:")
+            for ig in ignores:
+                click.echo(f"  · {ig}")
+        else:
+            click.echo("No ignore patterns configured.")
+    else:
+        # Quick add without flag
+        if pattern not in ignores:
+            ignores.append(pattern)
+            cfg_file.write_text(json.dumps(ignores, indent=2))
+        click.echo(f"✅ Ignoring: {pattern}")
+
+
 if __name__ == "__main__":
     main()
