@@ -1128,5 +1128,45 @@ def reset(path: str):
     click.echo("✅ CHM data reset. Run 'chm init .' to start fresh.")
 
 
+@main.command()
+@click.argument("paths", nargs=-1, type=click.Path(exists=True))
+def workspace(paths: tuple):
+    """Analyze multiple repos and compare health scores side-by-side."""
+    from chm.git_collector import GitCollector
+    from chm.analyzers import AuthorAnalyzer, HotspotAnalyzer
+    from chm.reporters import TerminalReporter
+
+    if not paths:
+        paths = (".",)
+
+    results = []
+    tr = TerminalReporter()
+
+    for p in paths:
+        try:
+            c = GitCollector(str(Path(p).resolve()))
+            h = HotspotAnalyzer(c).analyze()
+            a = AuthorAnalyzer(c).analyze()
+            score = tr._calculate_health_score({
+                "hotspots": h, "authors": a, "pulse": {},
+                "complexity": {}, "dead_code": {},
+                "dependencies": {}, "test_coverage": {}, "duplication": {},
+            })
+            results.append((c.repo_name(), score, a["bus_factor"], a["total_contributors"], h["total_churn"]))
+        except ValueError:
+            click.echo(f"  ⚠️ {p}: not a git repo")
+
+    if not results:
+        return
+
+    results.sort(key=lambda x: x[1], reverse=True)
+    click.echo(f"\n📊 Workspace Health — {len(results)} repos\n")
+    click.echo(f"  {'Repo':<25} {'Score':>6} {'BF':>5} {'Contrib':>7} {'Churn':>8}")
+    click.echo(f"  {'─'*25} {'─'*6} {'─'*5} {'─'*7} {'─'*8}")
+    for name, score, bf, contrib, churn in results:
+        color = "green" if score >= 70 else "yellow" if score >= 40 else "red"
+        click.echo(f"  {name:<25} {click.style(f'{score:>5}', fg=color)}/100 {bf:>5} {contrib:>7} {churn:>8,}")
+
+
 if __name__ == "__main__":
     main()
