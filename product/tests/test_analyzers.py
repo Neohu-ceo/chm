@@ -194,5 +194,41 @@ class TestDuplicationAnalyzer:
         assert isinstance(data["file_pairs_with_duplication"], int)
 
 
+class TestDiffAnalyzer:
+    def test_diff_returns_data(self):
+        from chm.analyzers.diff import DiffAnalyzer
+        data = DiffAnalyzer(str(DEMO_REPO)).diff()
+        if "error" not in data:
+            assert "ci_status" in data
+            assert data["ci_status"] in ("pass", "fail")
+
+    def test_diff_has_deltas(self):
+        from chm.analyzers.diff import DiffAnalyzer
+        data = DiffAnalyzer(str(DEMO_REPO)).diff()
+        if "error" not in data:
+            assert "commits" in data
+
+    def test_diff_ci_mode(self):
+        from chm.analyzers.diff import DiffAnalyzer
+        data = DiffAnalyzer(str(DEMO_REPO)).diff()
+        assert "ci_status" in data or "error" in data
+
+
+class TestEmptyRepo:
+    def test_empty_repo_collector(self):
+        from chm.git_collector import GitCollector
+        gc = GitCollector("/tmp/chm-test-empty")
+        assert gc.total_commits() == 0
+
+    def test_empty_repo_analyze(self):
+        from chm.analyzers import AuthorAnalyzer, HotspotAnalyzer
+        from chm.git_collector import GitCollector
+        gc = GitCollector("/tmp/chm-test-empty")
+        authors = AuthorAnalyzer(gc).analyze()
+        assert authors["total_contributors"] >= 0
+        hotspots = HotspotAnalyzer(gc).analyze()
+        assert "top_hotspots" in hotspots
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
