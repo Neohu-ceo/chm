@@ -143,7 +143,8 @@ class FloatPet:
         self._menu = tk.Menu(self.r, tearoff=0)
         self._menu.add_command(label="👆 戳一下", command=self.poke)
         self._menu.add_command(label="🍔 喂食 (-10🪙)", command=self.feed)
-        self._menu.add_command(label="🎮 小游戏 (赚XP!)", command=self._start_minigame)
+        self._menu.add_command(label="🎮 戳戳 Rush", command=self._start_minigame)
+        self._menu.add_command(label="🧠 记忆翻牌", command=self._memory_game)
         self._menu.add_command(label="💤 睡觉", command=self.sleep_pet)
         self._menu.add_separator()
         self._menu.add_command(label="🥚 领新蛋 (Lv.10)", command=self._new_egg)
@@ -558,6 +559,78 @@ class FloatPet:
             with urllib.request.urlopen(req, timeout=2) as r:
                 pass
         except: pass
+
+    # ── Memory Game ────────────────────────────────────────────
+
+    def _memory_game(self):
+        """Simple pattern memory game. Remember the sequence, tap in order!"""
+        self.mem_sequence = [random.randint(0, 3) for _ in range(4)]
+        self.mem_player_idx = 0
+        self.mem_active = True
+        self.mem_score = 0
+        self._mem_show_sequence(0)
+
+    def _mem_show_sequence(self, idx):
+        if idx >= len(self.mem_sequence):
+            self._mem_player_turn()
+            return
+        self.c.delete("game")
+        self.c.create_rectangle(0, 0, 220, 360, fill="#1a1a1a", tags="game")
+        colors = ["#ff6b35", "#5b9bd5", "#6baf6b", "#e8879a"]
+        pos = [(55,120),(110,120),(55,180),(110,180)]
+        self.c.create_text(110, 30, text=f"🧠 记住顺序 #{idx+1}",
+                           fill="#fff", font=("PingFang SC", 12, "bold"), tags="game")
+        # Flash the correct tile
+        cx, cy = pos[self.mem_sequence[idx]]
+        self.c.create_rectangle(cx-20,cy-20,cx+20,cy+20,
+                                fill=colors[self.mem_sequence[idx]], tags="game")
+        self.r.after(600, lambda: self._mem_clear_then_next(idx))
+
+    def _mem_clear_then_next(self, idx):
+        self.c.delete("game")
+        self.r.after(300, lambda: self._mem_show_sequence(idx + 1))
+
+    def _mem_player_turn(self):
+        self.c.delete("game")
+        self.c.create_rectangle(0, 0, 220, 360, fill="#1a1a1a", tags="game")
+        self.c.create_text(110, 30, text="👆 按顺序点击！",
+                           fill="#fbbf24", font=("PingFang SC", 13, "bold"), tags="game")
+        colors = ["#ff6b35", "#5b9bd5", "#6baf6b", "#e8879a"]
+        labels = ["🔥","💧","🌿","💗"]
+        pos = [(55,120),(110,120),(55,180),(110,180)]
+        for i in range(4):
+            cx, cy = pos[i]
+            self.c.create_rectangle(cx-25,cy-25,cx+25,cy+25, fill=colors[i], tags="game")
+            self.c.create_text(cx, cy, text=labels[i],
+                               fill="#fff", font=("PingFang SC", 16), tags="game")
+        self.c.tag_bind("game", "<Button-1>", self._mem_click)
+
+    def _mem_click(self, event):
+        if not getattr(self, 'mem_active', False): return
+        pos = [(55,120),(110,120),(55,180),(110,180)]
+        clicked = -1
+        for i, (cx, cy) in enumerate(pos):
+            if abs(event.x - cx) < 25 and abs(event.y - cy) < 25:
+                clicked = i; break
+        if clicked < 0: return
+
+        if clicked == self.mem_sequence[self.mem_player_idx]:
+            self.mem_player_idx += 1
+            if self.mem_player_idx >= len(self.mem_sequence):
+                # Won!
+                self.mem_score = len(self.mem_sequence)
+                xp = self.mem_score * 25
+                for _ in range(xp // 10): self.api("/api/poke")
+                self.c.delete("game")
+                self.msg(f"🧠 完美！+{xp}XP")
+                self.mem_active = False
+                # Make it harder next time
+                if len(self.mem_sequence) < 8:
+                    self.mem_sequence.append(random.randint(0,3))
+        else:
+            self.c.delete("game")
+            self.msg(f"❌ 错了！记住 {len(self.mem_sequence)} 个")
+            self.mem_active = False
 
     def _hatch_complete(self):
         self.hatching = False
