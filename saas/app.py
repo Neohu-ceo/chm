@@ -142,6 +142,12 @@ def settings_page():
     return _render_page("settings.html", title="设置 — Lighthouse Analytics", user=g.user)
 
 
+@app.route("/showcase")
+def showcase_page():
+    """Showcase: health analysis of popular open source projects."""
+    return _render_page("showcase.html", title="开源项目健康排行榜 — CHM")
+
+
 @app.route("/demo")
 def demo_page():
     """Free online demo — try CHM without installing."""
