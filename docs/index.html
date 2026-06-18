@@ -1,0 +1,68 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="CHM — 一行命令检查代码库健康度。8个指标，开源免费，本地运行。"><title>CHM — 代码库健康监控</title>
+<style>:root{--bg:#0a0f18;--text:#e0e8f0;--muted:#6b8299;--accent:#2563eb;--green:#10b981}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
+.hero{text-align:center;padding:5rem 1rem 3rem}
+.hero h1{font-size:3rem;font-weight:900}.hero h1 span{color:var(--accent)}
+.hero p{font-size:1.2rem;color:var(--muted);margin:1rem 0 2rem}
+.btn{display:inline-block;padding:.75rem 2rem;border-radius:10px;font-weight:700;text-decoration:none;margin:.3rem;font-size:.95rem}
+.btn-primary{background:var(--accent);color:#fff}.btn-outline{border:1px solid rgba(255,255,255,.2);color:var(--text)}
+.terminal{background:#050a12;border-radius:12px;padding:1.5rem;max-width:600px;margin:2rem auto;text-align:left;font-family:monospace;font-size:.85rem;line-height:1.8}
+.terminal .g{color:#10b981}.terminal .b{color:#93c5fd}.terminal .o{color:#6b8299}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;max-width:1000px;margin:3rem auto;padding:0 1rem}
+.feat{background:rgba(255,255,255,.03);border-radius:12px;padding:1.5rem;border:1px solid rgba(255,255,255,.05)}
+.feat h3{font-size:1.1rem;margin-bottom:.5rem}.feat p{font-size:.9rem;color:var(--muted)}
+.cta{text-align:center;padding:3rem 1rem;background:linear-gradient(135deg,#0f172a,#1e3a5f);margin:3rem 0}
+.cta h2{margin-bottom:1rem}.cta .btn{margin:.5rem}
+.pricing{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;max-width:700px;margin:2rem auto}
+.plan{background:rgba(255,255,255,.03);border-radius:16px;padding:2rem;text-align:center;flex:1;min-width:220px;border:1px solid rgba(255,255,255,.05)}
+.plan h3{font-size:1.2rem;margin-bottom:.5rem}
+.plan .price{font-size:2.5rem;font-weight:800;margin:1rem 0}
+.plan .price span{font-size:1rem;color:var(--muted)}
+.plan ul{list-style:none;text-align:left;font-size:.9rem;color:var(--muted);margin:1rem 0}
+.plan li{padding:.2rem 0}.plan li::before{content:'✓ ';color:var(--green)}
+.plan.popular{border-color:var(--accent)}
+footer{text-align:center;padding:2rem;color:var(--muted);font-size:.8rem}
+</style></head><body>
+
+<div class="hero">
+  <h1>🏠 <span>CHM</span></h1>
+  <p>一行命令，30秒诊断你的代码库健康度。8个指标，开源免费。</p>
+  <a href="#install" class="btn btn-primary">⬇ 免费安装</a>
+  <a href="#pricing" class="btn btn-outline">💎 Pro ($29/月)</a>
+</div>
+
+<div class="terminal">
+  <span class="g">$</span> <span class="b">pip install chm-cli</span><br>
+  <span class="g">$</span> <span class="b">chm doctor .</span><br><br>
+  <span class="o">🏥 CHM Doctor — Diagnosis for my-api</span><br>
+  <span class="o">  Health Score: </span><span style="color:#f59e0b">62/100</span><br>
+  <span class="o">  🚨 Bus factor = 1 — single point of failure</span><br>
+  <span class="o">  ⚠️ Top 3 files account for 52% of churn</span><br>
+  <span class="o">  🧪 Test coverage: D (22%)</span>
+</div>
+
+<div class="grid">
+  <div class="feat"><h3>🔥 代码热区</h3><p>哪些文件改动最频繁？热区 = bug 工厂，重构第一目标。</p></div>
+  <div class="feat"><h3>👥 巴士因子</h3><p>几个人离开项目就瘫痪？43% 的开源仓库 BF ≤ 2。</p></div>
+  <div class="feat"><h3>💓 团队脉动</h3><p>24小时提交分布。最长空白期多少天？</p></div>
+  <div class="feat"><h3>🧩 复杂度</h3><p>高复杂度 + 低注释率的文件是维护噩梦。</p></div>
+  <div class="feat"><h3>💀 死代码</h3><p>6个月未修改的文件，占着认知负担。</p></div>
+  <div class="feat"><h3>🔗 依赖分析</h3><p>循环依赖、耦合度——重构前先看这个。</p></div>
+</div>
+
+<div id="pricing"><div class="pricing">
+  <div class="plan"><h3>🆓 开源版</h3><div class="price">$0</div><ul><li>全部 8 个分析维度</li><li>终端 + JSON 输出</li><li>最多 3 个仓库</li><li>MIT 开源</li></ul><a href="#install" class="btn btn-outline">免费安装</a></div>
+  <div class="plan popular"><h3>💎 Pro</h3><div class="price">$29<span>/月</span></div><ul><li>HTML 可视化报告</li><li>历史趋势追踪</li><li>最多 50 个仓库</li><li>邮件周报</li><li>MCP 集成</li></ul><a href="https://buy.stripe.com/test_dRm3cu4SKcWvgGPgmygYU01" class="btn btn-primary">立即订阅</a></div>
+  <div class="plan"><h3>🏢 企业</h3><div class="price">$99<span>/月</span></div><ul><li>CI/CD 集成</li><li>无限仓库</li><li>SSO + 审计日志</li><li>专属支持</li></ul><a href="https://buy.stripe.com/test_dRm3cu4SKcWvgGPgmygYU01" class="btn btn-outline">联系我们</a></div>
+</div></div>
+
+<div class="cta" id="install">
+  <h2>30 秒上手</h2>
+  <code style="display:block;background:#050a12;padding:1rem;border-radius:8px;color:#10b981;font-size:1rem;max-width:400px;margin:0 auto 1rem;">pip install chm-cli<br>chm doctor .</code>
+  <a href="https://github.com/Neohu-ceo/chm" class="btn btn-outline">⭐ GitHub</a>
+  <a href="https://pypi.org/project/chm-cli/" class="btn btn-outline">📦 PyPI</a>
+</div>
+
+<footer>🏠 CHM by Lighthouse Analytics · MIT 开源 · 代码从不出你电脑</footer>
+</body></html>
