@@ -1,6 +1,7 @@
 # 🏠 CHM — Codebase Health Monitor
 
 <p align="center">
+  <a href="https://buy.stripe.com/test_dRm3cu4SKcWvgGPgmygYU01"><img src="https://img.shields.io/badge/Pro-$29/month-blue?style=flat" alt="CHM Pro"></a>
   <img src="https://img.shields.io/badge/code_health-know%20yours-blue?style=flat" alt="Code Health">
   <img src="https://img.shields.io/pypi/v/chm-cli?color=blue" alt="PyPI">
   <img src="https://img.shields.io/pypi/pyversions/chm-cli" alt="Python">
